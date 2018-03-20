@@ -20,13 +20,6 @@
 ;; set up line numbering and highlight the current line number
 (require 'linum-highlight-current-line-number)
 (setq linum-format 'linum-highlight-current-line-number)
-;; python settings
-(add-hook 'python-mode-hook '(lambda () (linum-on)))
-;; E-Lisp settings
-(add-hook 'emacs-lisp-mode-hook '(lambda () (linum-on)))
-;; CC settings
-(add-hook 'c-mode-common-hook '(lambda () (linum-on)))
-(defvaralias 'c-basic-offset 'tab-width)
 ;;set highlight color
 (set-face-attribute 'region nil :background "#333")
 ;set org agenda files
@@ -37,12 +30,13 @@
 (ac-config-default)
 ;; disable scrollbars
 (scroll-bar-mode -1)
-;; enable minor modes in org-mode
-(add-hook 'org-mode-hook '(lambda () (abbrev-mode) (visual-line-mode) (org-indent)))
-;; email
-(autoload 'notmuch "notmuch" "notmuch mail" t)
-(require 'notmuch)
-(setq notmuch-search-oldest-first nil)
+;; minor mode settings
+(add-hook 'org-mode-hook '(lambda () (abbrev-mode) (visual-line-mode) (org-indent))) ;; org-mode settings
+(add-hook 'python-mode-hook '(lambda () (linum-on))) ;; python settings
+(add-hook 'emacs-lisp-mode-hook '(lambda () (linum-on))) ;; E-Lisp settings
+
+(add-hook 'c-mode-common-hook '(lambda () (linum-on))) ;; C settings
+(defvaralias 'c-basic-offset 'tab-width)
 
 ;; my functions
 
@@ -105,6 +99,7 @@
 (global-set-key (kbd "M-p p")     'mingus-prev)
 
 
+(night-mode) ;; default to night mode
 
 ;; nonsense from package manager
 
@@ -116,7 +111,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (notmuch org-bullets mingus auto-complete haskell-mode org-plus-contrib org-edna)))
+    (markdown-mode notmuch org-bullets mingus auto-complete haskell-mode org-plus-contrib org-edna)))
  '(split-width-threshold 12)
  '(split-window-preferred-function (quote split-window-sensibly)))
 (custom-set-faces
@@ -124,4 +119,4 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(default ((t (:family "Terminus" :foundry "xos4" :slant normal :weight normal :height 120 :width normal)))))

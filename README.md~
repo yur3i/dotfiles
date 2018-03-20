@@ -1,0 +1,8 @@
+Hi, these are my emacs settings; I have tried to comment them to make them more understandable
+
+To install do:
+
+`cp .emacs ~/.emacs`
+
+`cp -rf lisp/ ~/.emacs.d/lisp --create-dirs`
+`cp -rf elpa/ ~/.emacs.d/elpa`
