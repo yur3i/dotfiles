@@ -22,13 +22,17 @@ Sorting package repositories and load-path directories
 
 * General Settings
 #+BEGIN_SRC emacs-lisp
-;;autocomplete brackets
 (electric-pair-mode 1)
+(fringe-mode 2)
+(setq backup-directory-alist '(("." . "~/.autosave")))
 #+END_SRC
 * Org Mode
 ** set org directory and notes.org file
 #+BEGIN_SRC emacs-lisp
+'(org-directory "~/org")
 (setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
+'(org-default-notes-file (concat org-directory "/notes.org"))
+
 #+END_SRC
 ** Minor modes and hide leading stars
 #+BEGIN_SRC emacs-lisp
@@ -109,4 +113,21 @@ for use with org-open-point
 ** C
 #+BEGIN_SRC emacs-lisp
 (add-hook 'c-mode-common-hook '(lambda () )) ;; C modes
+#+END_SRC
+* Dashboard
+#+BEGIN_SRC emacs-lisp
+(use-package dashboard
+  :ensure t
+  :init
+  :config
+  (dashboard-setup-startup-hook)
+  (setq dashboard-banner-logo-title "Traps are gay")
+  (setq dashboard-startup-banner "~/.emacs.d/small-logo.png")
+
+  (defun dashboard-insert-space ()
+    (insert ""))
+
+  (setq dashboard-items '((recents . 10)
+                          (agenda . 5)
+                          )))
 #+END_SRC
