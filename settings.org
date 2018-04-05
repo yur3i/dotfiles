@@ -1,0 +1,112 @@
+* Package management
+Sorting package repositories and load-path directories
+#+BEGIN_SRC emacs-lisp
+(require 'package)
+(add-to-list 'package-archives'("melpa-stable" . "https://stable.melpa.org/packages/"))
+(add-to-list 'package-archives'("org"          . "https://orgmode.org/elpa/"))
+(add-to-list 'load-path "~/.emacs.d/lisp/")
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+(package-initialize)
+#+END_SRC
+* Theming
+** Disable GUI elements
+#+BEGIN_SRC emacs-lisp
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+#+END_SRC
+** load theme
+#+BEGIN_SRC emacs-lisp
+(load-theme 'gotham t)
+#+END_SRC
+
+* General Settings
+#+BEGIN_SRC emacs-lisp
+;;autocomplete brackets
+(electric-pair-mode 1)
+#+END_SRC
+* Org Mode
+** set org directory and notes.org file
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
+#+END_SRC
+** Minor modes and hide leading stars
+#+BEGIN_SRC emacs-lisp
+;; hide leading stars
+(setq org-hide-leading-stars t)
+;; minor modes
+(add-hook 'org-mode-hook '(lambda () (abbrev-mode) (visual-line-mode) (org-bullets-mode)))
+#+END_SRC
+* Functions
+** Opening org point in a seperate window
+#+BEGIN_SRC emacs-lisp
+(defun open-point-org ()
+  "Open org mode heading in another window, expand it, and narrow it"
+  (interactive)
+  (org-beginning-of-line)
+  (setq goal-point (point))
+  (call-interactively #'clone-indirect-buffer-other-window)
+  (while (not (= goal-point (point)))
+    (goto-char goal-point)
+    (org-beginning-of-line)
+    (org-cycle)
+    (goto-char goal-point)
+    (org-beginning-of-line))
+  (call-interactively #'org-next-visible-heading)
+  (narrow-to-region goal-point (point))
+  (goto-char goal-point)
+  (fset 'tab
+	(lambda (&optional arg) "Keyboard macro." (interactive "p")
+	  (kmacro-exec-ring-item (quote ([tab] 0 "%d")) arg)))
+  (tab))
+#+END_SRC
+** Create a collapsed point with a stop
+for use with org-open-point
+#+BEGIN_SRC emacs-lisp
+(defun org-collapsed-point()
+  "Create a point on the same level collapsed with a full stop"
+  (interactive)
+  (org-meta-return)
+  (newline)
+  (insert ".")
+  (previous-line)
+  (move-beginning-of-line nil)
+  (org-cycle))
+#+END_SRC
+* Keybindings
+** Functions
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-c o")        #'open-point-org)
+(global-set-key (kbd "<C-M-return>") #'org-collapsed-point)
+#+END_SRC
+** Window sizing
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-<left>")      'shrink-window-horizontally)
+(global-set-key (kbd "C-<right>")     'enlarge-window-horizontally)
+(global-set-key (kbd "C-<down>")      'shrink-window)
+(global-set-key (kbd "C-<up>")        'enlarge-window)
+#+END_SRC
+** Mingus (mpd control)
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "M-p P")         'mingus-play-pos)
+(global-set-key (kbd "M-p n")         'mingus-next)
+(global-set-key (kbd "M-p p")         'mingus-prev)
+#+END_SRC
+** Org Mode
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-c a")         'org-agenda)
+(global-set-key (kbd "C-x K")         'kill-buffer-and-window)
+#+END_SRC
+* Language Minor Modes and settings
+** python
+#+BEGIN_SRC emacs-lisp
+(add-hook 'python-mode-hook '(lambda () )) 
+#+END_SRC
+** Emacs Lisp
+#+BEGIN_SRC emacs-lisp
+(add-hook 'emacs-lisp-mode-hook '(lambda () ))
+#+END_SRC
+** C
+#+BEGIN_SRC emacs-lisp
+(add-hook 'c-mode-common-hook '(lambda () )) ;; C modes
+#+END_SRC
