@@ -8,17 +8,6 @@ Sorting package repositories and load-path directories
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 (package-initialize)
 #+END_SRC
-* Theming
-** Disable GUI elements
-#+BEGIN_SRC emacs-lisp
-(scroll-bar-mode -1)
-(tool-bar-mode -1)
-(menu-bar-mode -1)
-#+END_SRC
-** load theme
-#+BEGIN_SRC emacs-lisp
-(load-theme 'gotham t)
-#+END_SRC
 
 * General Settings
 #+BEGIN_SRC emacs-lisp
@@ -76,6 +65,33 @@ for use with org-open-point
   (previous-line)
   (move-beginning-of-line nil)
   (org-cycle))
+#+END_SRC
+** Transparency
+#+BEGIN_SRC emacs-lisp
+ (defun transparency (value)
+   "Sets the transparency of the frame window. 0=transparent/100=opaque"
+   (interactive "nTransparency Value 0 - 100 opaque:")
+   (set-frame-parameter (selected-frame) 'alpha value))
+#+END_SRC
+* Theming
+** Disable GUI elements
+#+BEGIN_SRC emacs-lisp
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+#+END_SRC
+** set colors
+#+BEGIN_SRC emacs-lisp
+(set-background-color "black")
+(set-foreground-color "green")
+#+END_SRC
+*** set background color to black
+#+BEGIN_SRC emacs-lisp
+ (set-background-color "black")
+#+END_SRC
+** Transparency
+#+BEGIN_SRC emacs-lisp
+(transparency 90)
 #+END_SRC
 * Keybindings
 ** Functions
