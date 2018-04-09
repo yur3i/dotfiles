@@ -12,8 +12,8 @@ Sorting package repositories and load-path directories
 * General Settings
 #+BEGIN_SRC emacs-lisp
 (electric-pair-mode 1)
-(fringe-mode 2)
 (setq backup-directory-alist '(("." . "~/.autosave")))
+(linum-relative-global-mode t)
 #+END_SRC
 * Org Mode
 ** set org directory and notes.org file
@@ -74,24 +74,20 @@ for use with org-open-point
    (set-frame-parameter (selected-frame) 'alpha value))
 #+END_SRC
 * Theming
-** Disable GUI elements
+** Disable menu bar
 #+BEGIN_SRC emacs-lisp
-(scroll-bar-mode -1)
-(tool-bar-mode -1)
 (menu-bar-mode -1)
 #+END_SRC
 ** set colors
 #+BEGIN_SRC emacs-lisp
 (set-background-color "black")
-(set-foreground-color "green")
+(set-foreground-color "white")
 #+END_SRC
-*** set background color to black
+** Modeline
 #+BEGIN_SRC emacs-lisp
- (set-background-color "black")
-#+END_SRC
-** Transparency
-#+BEGIN_SRC emacs-lisp
-(transparency 90)
+(set-face-attribute 'mode-line nil :box nil)
+(set-face-foreground 'mode-line "black")
+(set-face-background 'mode-line "white")
 #+END_SRC
 * Keybindings
 ** Functions
@@ -137,8 +133,6 @@ for use with org-open-point
   :init
   :config
   (dashboard-setup-startup-hook)
-  (setq dashboard-banner-logo-title "Traps are gay")
-  (setq dashboard-startup-banner "~/.emacs.d/small-logo.png")
 
   (defun dashboard-insert-space ()
     (insert ""))
@@ -147,3 +141,7 @@ for use with org-open-point
                           (agenda . 5)
                           )))
 #+END_SRC
+
+* Evil Mode
+
+
