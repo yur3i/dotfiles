@@ -1,37 +1,25 @@
 * Package management
-Sorting package repositories and load-path directories
 #+BEGIN_SRC emacs-lisp
+;; packaging
 (require 'package)
 (add-to-list 'package-archives'("melpa-stable" . "https://stable.melpa.org/packages/"))
 (add-to-list 'package-archives'("org"          . "https://orgmode.org/elpa/"))
-(add-to-list 'load-path "~/.emacs.d/evil/")
+(add-to-list 'load-path "~/.emacs.d/lisp/")
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 (package-initialize)
 #+END_SRC
-
-* General Settings
+* General settings
 #+BEGIN_SRC emacs-lisp
+(scroll-bar-mode -1)
 (electric-pair-mode 1)
 (setq backup-directory-alist '(("." . "~/.autosave")))
-(linum-relative-global-mode t)
-#+END_SRC
-* Org Mode
-** set org directory and notes.org file
-#+BEGIN_SRC emacs-lisp
-'(org-directory "~/org")
-(setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
-'(org-default-notes-file (concat org-directory "/notes.org"))
-
-#+END_SRC
-** Minor modes and hide leading stars
-#+BEGIN_SRC emacs-lisp
-;; hide leading stars
-(setq org-hide-leading-stars t)
-;; minor modes
-(add-hook 'org-mode-hook '(lambda () (abbrev-mode) (visual-line-mode) (org-bullets-mode)))
+(setq tab-width 8)
+(defvaralias 'c-basic-offset 'tab-width)
+(defvaralias 'cperl-indent-level 'tab-width)
+(setq-default indent-tabs-mode t)
 #+END_SRC
 * Functions
-** Opening org point in a seperate window
+** Open an org-mode point in a seperate buffer.
 #+BEGIN_SRC emacs-lisp
 (defun open-point-org ()
   "Open org mode heading in another window, expand it, and narrow it"
@@ -53,11 +41,10 @@ Sorting package repositories and load-path directories
 	  (kmacro-exec-ring-item (quote ([tab] 0 "%d")) arg)))
   (tab))
 #+END_SRC
-** Create a collapsed point with a stop
-for use with org-open-point
+** Create a collapsed org point with a . (for use with org-open-point)
 #+BEGIN_SRC emacs-lisp
 (defun org-collapsed-point()
-  "Create a point on the same level collapsed with a full stop"
+  "Create a point on the same level collapsed with a full stop (for use with open-point-org)"
   (interactive)
   (org-meta-return)
   (newline)
@@ -66,6 +53,19 @@ for use with org-open-point
   (move-beginning-of-line nil)
   (org-cycle))
 #+END_SRC
+** Kill the whole line the cursor is on
+#+BEGIN_SRC emacs-lisp
+(defun kill-whole-line nil
+  "kills the entire line on which the cursor is located, and places the 
+cursor as close to its previous position as possible."
+  (interactive)
+  (progn
+    (let ((y (current-column))
+	  (a (progn (beginning-of-line) (point)))
+	  (b (progn (forward-line 1) (point))))
+      (kill-region a b)
+      (move-to-column y))))
+#+END_SRC
 ** Transparency
 #+BEGIN_SRC emacs-lisp
  (defun transparency (value)
@@ -73,78 +73,69 @@ for use with org-open-point
    (interactive "nTransparency Value 0 - 100 opaque:")
    (set-frame-parameter (selected-frame) 'alpha value))
 #+END_SRC
-* Theming
-** Disable menu bar
+** split window and switch to the new window
 #+BEGIN_SRC emacs-lisp
-(menu-bar-mode -1)
+(defun split-window-below-and-switch ()
+  "Split the window horizontally, then switch to the new pane."
+  (interactive)
+  (split-window-below)
+  (other-window 1))
+
+(defun split-window-right-and-switch ()
+  "Split the window vertically, then switch to the new pane."
+  (interactive)
+  (split-window-right)
+  (other-window 1))
 #+END_SRC
-** set colors
+* Theming
 #+BEGIN_SRC emacs-lisp
 (set-background-color "black")
 (set-foreground-color "white")
-#+END_SRC
-** Modeline
-#+BEGIN_SRC emacs-lisp
 (set-face-attribute 'mode-line nil :box nil)
 (set-face-foreground 'mode-line "black")
 (set-face-background 'mode-line "white")
+(fringe-mode 2)
+(transparency 90)
+(global-hl-line-mode)
+(tool-bar-mode -1)
+(menu-bar-mode -1)
 #+END_SRC
 * Keybindings
 ** Functions
 #+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-M-k")        #'kill-whole-line)
 (global-set-key (kbd "C-c o")        #'open-point-org)
-(global-set-key (kbd "<C-M-return>") #'org-collapsed-point)
+(global-set-key (kbd "C-M-<return>") #'org-collapsed-point)
+(global-set-key (kbd "C-x 2")        #'split-window-below-and-switch)
+(global-set-key (kbd "C-x 3")        #'split-window-right-and-switch)
 #+END_SRC
-** Window sizing
+** Window manipulation
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-<left>")      'shrink-window-horizontally)
 (global-set-key (kbd "C-<right>")     'enlarge-window-horizontally)
 (global-set-key (kbd "C-<down>")      'shrink-window)
 (global-set-key (kbd "C-<up>")        'enlarge-window)
 #+END_SRC
-** Mingus (mpd control)
+** MPD control
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "M-p P")         'mingus-play-pos)
 (global-set-key (kbd "M-p n")         'mingus-next)
 (global-set-key (kbd "M-p p")         'mingus-prev)
 #+END_SRC
-** Org Mode
+** Other
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-c a")         'org-agenda)
 (global-set-key (kbd "C-x K")         'kill-buffer-and-window)
 #+END_SRC
-* Language Minor Modes and settings
-** python
+* Minor modes
 #+BEGIN_SRC emacs-lisp
-(add-hook 'python-mode-hook '(lambda () )) 
-#+END_SRC
-** Emacs Lisp
-#+BEGIN_SRC emacs-lisp
+(add-hook 'python-mode-hook '(lambda () ))
 (add-hook 'emacs-lisp-mode-hook '(lambda () ))
+(add-hook 'c-mode-common-hook '(lambda () ))
 #+END_SRC
-** C
+* org-mode
 #+BEGIN_SRC emacs-lisp
-(add-hook 'c-mode-common-hook '(lambda () )) ;; C modes
+'(org-directory "~/org")
+(setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
+'(org-default-notes-file (concat org-directory "/notes.org"))
 #+END_SRC
-* Dashboard
-#+BEGIN_SRC emacs-lisp
-(use-package dashboard
-  :ensure t
-  :init
-  :config
-  (dashboard-setup-startup-hook)
-
-  (defun dashboard-insert-space ()
-    (insert ""))
-
-  (setq dashboard-items '((recents . 10)
-                          (agenda . 5)
-                          )))
-#+END_SRC
-
-* Evil Mode
-#+BEGIN_SRC emacs-lisp
-(require 'evil)
-(evil-mode 1)
-#+END_SRC
-
