@@ -10,7 +10,6 @@
 #+END_SRC
 * General settings
 #+BEGIN_SRC emacs-lisp
-(scroll-bar-mode -1)
 (electric-pair-mode 1)
 (setq backup-directory-alist '(("." . "~/.autosave")))
 (setq tab-width 8)
@@ -89,16 +88,9 @@ cursor as close to its previous position as possible."
 #+END_SRC
 * Theming
 #+BEGIN_SRC emacs-lisp
-(set-background-color "black")
-(set-foreground-color "white")
-(set-face-attribute 'mode-line nil :box nil)
-(set-face-foreground 'mode-line "black")
-(set-face-background 'mode-line "white")
-(fringe-mode 2)
-(transparency 90)
-(global-hl-line-mode)
-(tool-bar-mode -1)
 (menu-bar-mode -1)
+(tool-bar-mode -1)
+(load-theme 'challenger-deep t )
 #+END_SRC
 * Keybindings
 ** Functions
@@ -132,10 +124,17 @@ cursor as close to its previous position as possible."
 (add-hook 'python-mode-hook '(lambda () ))
 (add-hook 'emacs-lisp-mode-hook '(lambda () ))
 (add-hook 'c-mode-common-hook '(lambda () ))
+(add-hook 'org-mode-hook '(lambda (org-bullets-mode) ))
 #+END_SRC
-* org-mode
+* Org Mode
 #+BEGIN_SRC emacs-lisp
 '(org-directory "~/org")
 (setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
 '(org-default-notes-file (concat org-directory "/notes.org"))
+#+END_SRC
+* EXWM
+#+BEGIN_SRC emacs-lisp
+(require 'exwm)
+(require 'exwm-config)
+(exwm-config-default)
 #+END_SRC
