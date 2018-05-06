@@ -1,3 +1,4 @@
+
 * Package management
 #+BEGIN_SRC emacs-lisp
 ;; packaging
@@ -20,7 +21,7 @@
 * Functions
 ** Open an org-mode point in a seperate buffer.
 #+BEGIN_SRC emacs-lisp
-(defun open-point-org ()
+(defun org-open-point ()
   "Open org mode heading in another window, expand it, and narrow it"
   (interactive)
   (org-beginning-of-line)
@@ -39,18 +40,6 @@
 	(lambda (&optional arg) "Keyboard macro." (interactive "p")
 	  (kmacro-exec-ring-item (quote ([tab] 0 "%d")) arg)))
   (tab))
-#+END_SRC
-** Create a collapsed org point with a . (for use with org-open-point)
-#+BEGIN_SRC emacs-lisp
-(defun org-collapsed-point()
-  "Create a point on the same level collapsed with a full stop (for use with open-point-org)"
-  (interactive)
-  (org-meta-return)
-  (newline)
-  (insert ".")
-  (previous-line)
-  (move-beginning-of-line nil)
-  (org-cycle))
 #+END_SRC
 ** Kill the whole line the cursor is on
 #+BEGIN_SRC emacs-lisp
@@ -86,20 +75,44 @@ cursor as close to its previous position as possible."
   (split-window-right)
   (other-window 1))
 #+END_SRC
+** Create a collapsed org-mode point
+#+BEGIN_SRC emacs-lisp
+(defun org-collapsed-point () 
+  (interactive)
+  (let ((org-M-RET-may-split-line nil) ;don't split header line
+        (header-name (read-string "New header: ")))
+       (org-meta-return)
+       (insert header-name "\n.")
+       (previous-line)
+       (org-cycle)))
+#+END_SRC
+** Create a collapsed org-mode point and open in new window
+#+BEGIN_SRC emacs-lisp
+(defun org-collapsed-point-and-open () 
+  (interactive)
+  (let ((org-M-RET-may-split-line nil) ;don't split header line
+        (header-name (read-string "New header: ")))
+       (org-meta-return)
+       (insert header-name "\n.")
+       (previous-line)
+       (org-cycle)
+       (org-open-point)))
+#+END_SRC
 * Theming
 #+BEGIN_SRC emacs-lisp
+(scroll-bar-mode -1)
 (menu-bar-mode -1)
-(tool-bar-mode -1)
-(load-theme 'challenger-deep t )
+(set-background-color "#faebd7")
 #+END_SRC
 * Keybindings
 ** Functions
 #+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "C-M-k")        #'kill-whole-line)
-(global-set-key (kbd "C-c o")        #'open-point-org)
-(global-set-key (kbd "C-M-<return>") #'org-collapsed-point)
-(global-set-key (kbd "C-x 2")        #'split-window-below-and-switch)
-(global-set-key (kbd "C-x 3")        #'split-window-right-and-switch)
+(global-set-key (kbd "C-M-k")          #'kill-whole-line)
+(global-set-key (kbd "C-c o")          #'org-open-point)
+(global-set-key (kbd "C-<return>")     #'org-collapsed-point)
+(global-set-key (kbd "C-M-<return>")   #'org-collapsed-point-and-open)
+(global-set-key (kbd "C-x 2")          #'split-window-below-and-switch)
+(global-set-key (kbd "C-x 3")          #'split-window-right-and-switch)
 #+END_SRC
 ** Window manipulation
 #+BEGIN_SRC emacs-lisp
@@ -132,6 +145,7 @@ cursor as close to its previous position as possible."
 (setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
 '(org-default-notes-file (concat org-directory "/notes.org"))
 #+END_SRC
+
 * EXWM
 #+BEGIN_SRC emacs-lisp
 (require 'exwm)

@@ -20,13 +20,11 @@
  '(menu-bar-mode nil)
  '(package-selected-packages
    (quote
-    (powerline org-bullets telephone-line magit org-plus-contrib exwm)))
+    (solarized-theme weechat powerline org-bullets telephone-line magit org-plus-contrib exwm)))
  '(tool-bar-mode nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Iosevka" :foundry "CYEL" :slant normal :weight normal :height 120 :width normal))))
- '(hl-line ((t (:background "darkblue" :foreground "white")))))
-
+ '(default ((t (:family "Fantasque Sans Mono" :foundry "unknown" :slant normal :weight normal :height 120 :width normal)))))
