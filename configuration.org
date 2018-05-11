@@ -98,6 +98,19 @@ cursor as close to its previous position as possible."
        (org-cycle)
        (org-open-point)))
 #+END_SRC
+** Stop themes messing up headings
+#+BEGIN_SRC emacs-lisp
+(defun my/org-mode-hook ()
+  "Stop the org-level headers from increasing in height relative to the other text."
+  (dolist (face '(org-level-1
+                  org-level-2
+                  org-level-3
+                  org-level-4
+                  org-level-5))
+    (set-face-attribute face nil :weight 'semi-bold :height 1.0)))
+
+
+#+END_SRC
 * Theming
 Disable all the window crap.
 #+BEGIN_SRC emacs-lisp
@@ -105,24 +118,41 @@ Disable all the window crap.
 (menu-bar-mode -1)
 #+END_SRC
 Set the background and foreground colors
-#+BEGIN_SRC emacs-lisp
-(set-background-color "#222")
+(set-background-color "#111")
 (set-foreground-color "#FFFFFF")
+
+theme:
+#+BEGIN_SRC emacs-lisp
+(load-theme 'doom-molokai t)
 #+END_SRC
 * Mode line
 Set the colors for my mode line,
-#+BEGIN_SRC emacs-lisp
 (set-face-foreground 'mode-line "white")
-(set-face-background 'mode-line "#444")
-(set-face-background 'mode-line-inactive "#444")
+(set-face-background 'mode-line "black")
+(set-face-background 'mode-line-inactive "black")
 (set-face-foreground 'mode-line-inactive "#888")
 (set-face-attribute 'mode-line nil :box nil)
 (set-face-attribute 'mode-line-inactive nil :box nil)
-#+END_SRC
 Set the formatting for the mode-line clock
 #+BEGIN_SRC emacs-lisp
 (display-time-mode 1)
 (setq display-time-format "%H:%M")
+#+END_SRC
+** Telephone Line
+using this recently over stock modeline
+#+BEGIN_SRC emacs-lisp
+(telephone-line-mode 1)
+(setq telephone-line-lhs
+      '((evil   . (telephone-line-evil-tag-segment))
+        (accent . (telephone-line-vc-segment
+                   telephone-line-erc-modified-channels-segment
+                   telephone-line-process-segment))
+        (nil    . (telephone-line-minor-mode-segment
+                   telephone-line-buffer-segment))))
+(setq telephone-line-rhs
+      '((nil    . (telephone-line-misc-info-segment))
+        (accent . (telephone-line-major-mode-segment))
+        (evil   . (telephone-line-airline-position-segment))))
 #+END_SRC
 * Keybindings
 ** Functions
@@ -155,7 +185,15 @@ Keybindings for controlling mingus, an MPD frontend
 misc keybinds that I haven't catagorized yet
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-c a")         'org-agenda)
-
+(global-set-key "\M-s"                'avy-goto-char)
+#+END_SRC
+** Ivy, counsel, swiper
+Ivy enhanced versions of regular emacs functions
+#+BEGIN_SRC emacs-lisp
+(global-set-key "\C-s"          'swiper)
+(global-set-key (kbd "C-x C-f") 'counsel-find-file)
+(global-set-key "\M-x"          'counsel-M-x)
+(global-set-key (kbd "C-x b") 'ivy-switch-buffer)
 #+END_SRC
 * Org Mode
 set org files/folders
@@ -183,6 +221,10 @@ quickly add an Emacs Lisp source block
 (add-to-list 'org-structure-template-alist
              '("el" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC"))
 #+END_SRC
+call function to stop heading sizes changing
+#+BEGIN_SRC emacs-lisp
+(add-hook 'org-mode-hook 'my/org-mode-hook)
+#+END_SRC
 * EXWM
 #+BEGIN_SRC emacs-lisp
 (require 'exwm)
@@ -205,16 +247,30 @@ Keybindings
                         (exwm-workspace-switch-create ,i))))
                   (number-sequence 0 9))
         ;; run dialog
-        ([?\s-d] . (lambda (command)
-		     (interactive (list (read-shell-command "$ ")))
-		     (start-process-shell-command command nil command)))
+        ([?\s-d] . counsel-linux-app)
         ;; Open a terminal
         ([s-return] . (lambda ()
 		    (interactive)
 		    (start-process "" nil "/usr/bin/urxvt")))))
 #+END_SRC
 Enable EXWM
+Enable system tray
 #+BEGIN_SRC emacs-lisp
-(exwm-enable)
+(require 'exwm-systemtray)
+(exwm-systemtray-enable)
 #+END_SRC
+* Language specific stuff
+** LISP
+#+BEGIN_SRC emacs-lisp
+(setq lispy-mode-hooks
+      '(clojure-mode-hook
+        emacs-lisp-mode-hook
+        lisp-mode-hook
+        scheme-mode-hook))
 
+(dolist (hook lispy-mode-hooks)
+  (add-hook hook (lambda ()
+                   (setq show-paren-style 'expression)
+                   (paredit-mode)
+                   (rainbow-delimiters-mode))))
+#+END_SRC
