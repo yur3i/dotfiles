@@ -11,7 +11,7 @@
 Setting basic crap like tab length to 8 units and where to put autosaves.
 Electric pair mode is used for autocompleting brackets.
 #+BEGIN_SRC emacs-lisp
-(electric-pair-mode 1)
+
 (setq backup-directory-alist '(("." . "~/.autosave")))
 (setq tab-width 8)
 (defvaralias 'c-basic-offset 'tab-width)
@@ -111,48 +111,32 @@ cursor as close to its previous position as possible."
 
 
 #+END_SRC
-* Theming
-Disable all the window crap.
+** Kill line backward
 #+BEGIN_SRC emacs-lisp
-(scroll-bar-mode -1)
-(menu-bar-mode -1)
+(defun backwards-kill-line ()
+  (interactive)
+  (kill-region (point) (progn (beginning-of-line) (point))))
 #+END_SRC
-Set the background and foreground colors
-(set-background-color "#111")
-(set-foreground-color "#FFFFFF")
-
-theme:
+** C-x o backwards
 #+BEGIN_SRC emacs-lisp
-(load-theme 'doom-molokai t)
+(defun other-window-reverse (&optional x)
+  (interactive "P")
+  (if (equal x nil)
+      (other-window -1)
+    (other-window (- 0 x)) ))
+#+END_SRC
+* Theming
+#+BEGIN_SRC emacs-lisp
+(set-background-color "black")
+(set-foreground-color "white")
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+(fringe-mode -1)
 #+END_SRC
 * Mode line
-Set the colors for my mode line,
-(set-face-foreground 'mode-line "white")
-(set-face-background 'mode-line "black")
-(set-face-background 'mode-line-inactive "black")
-(set-face-foreground 'mode-line-inactive "#888")
-(set-face-attribute 'mode-line nil :box nil)
-(set-face-attribute 'mode-line-inactive nil :box nil)
-Set the formatting for the mode-line clock
 #+BEGIN_SRC emacs-lisp
 (display-time-mode 1)
 (setq display-time-format "%H:%M")
-#+END_SRC
-** Telephone Line
-using this recently over stock modeline
-#+BEGIN_SRC emacs-lisp
-(telephone-line-mode 1)
-(setq telephone-line-lhs
-      '((evil   . (telephone-line-evil-tag-segment))
-        (accent . (telephone-line-vc-segment
-                   telephone-line-erc-modified-channels-segment
-                   telephone-line-process-segment))
-        (nil    . (telephone-line-minor-mode-segment
-                   telephone-line-buffer-segment))))
-(setq telephone-line-rhs
-      '((nil    . (telephone-line-misc-info-segment))
-        (accent . (telephone-line-major-mode-segment))
-        (evil   . (telephone-line-airline-position-segment))))
 #+END_SRC
 * Keybindings
 ** Functions
@@ -164,6 +148,8 @@ The keybinds for each of my functions
 (global-set-key (kbd "C-M-<return>")   #'org-collapsed-point-and-open)
 (global-set-key (kbd "C-x 2")          #'split-window-below-and-switch)
 (global-set-key (kbd "C-x 3")          #'split-window-right-and-switch)
+(global-set-key (kbd "C-x p")          #'other-window-reverse)
+(global-set-key (kbd "C-c u")          #'kill-line-reverse)
 #+END_SRC
 ** Window manipulation
 Keybindings for resizing windows
@@ -186,6 +172,7 @@ misc keybinds that I haven't catagorized yet
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "C-c a")         'org-agenda)
 (global-set-key "\M-s"                'avy-goto-char)
+(global-set-key (kbd "C-c c")         'calc)
 #+END_SRC
 ** Ivy, counsel, swiper
 Ivy enhanced versions of regular emacs functions
@@ -195,22 +182,20 @@ Ivy enhanced versions of regular emacs functions
 (global-set-key "\M-x"          'counsel-M-x)
 (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
 #+END_SRC
+** Multiple cursors
+#+BEGIN_SRC emacs-lisp
+  (require 'multiple-cursors)
+  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+  (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+#+END_SRC
 * Org Mode
 set org files/folders
 #+BEGIN_SRC emacs-lisp
 '(org-directory "~/org")
 (setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
 '(org-default-notes-file (concat org-directory "/notes.org"))
-#+END_SRC
-enable org-bullets mode
-#+BEGIN_SRC emacs-lisp
-(use-package org-bullets
-  :init
-  (add-hook 'org-mode-hook #'org-bullets-mode))
-#+END_SRC
-change the ellipsis for ⤵
-#+BEGIN_SRC emacs-lisp
-(setq org-ellipsis "⤵")
 #+END_SRC
 use syntax highlighting in org source blocks
 #+BEGIN_SRC emacs-lisp
@@ -225,41 +210,15 @@ call function to stop heading sizes changing
 #+BEGIN_SRC emacs-lisp
 (add-hook 'org-mode-hook 'my/org-mode-hook)
 #+END_SRC
-* EXWM
+* Global minor modes
 #+BEGIN_SRC emacs-lisp
-(require 'exwm)
-(require 'exwm-config)
-(exwm-config-default)
+(electric-pair-mode 1)
+(winner-mode 1)
+(global-company-mode 1)
+(rainbow-mode 1)
+(rainbow-delimiters-mode 1)
 #+END_SRC
-Keybindings
-#+BEGIN_SRC emacs-lisp
-(setq exwm-input-global-keys
-      `(
-        ;; Bind "s-r" to exit char-mode and fullscreen mode.
-        ([?\s-r] . exwm-reset)
-        ;; Bind "s-w" to switch workspace interactively.
-        ([?\s-w] . exwm-workspace-switch)
-        ;; Bind "s-0" to "s-9" to switch to a workspace by its index.
-        ,@(mapcar (lambda (i)
-                    `(,(kbd (format "s-%d" i)) .
-                      (lambda ()
-                        (interactive)
-                        (exwm-workspace-switch-create ,i))))
-                  (number-sequence 0 9))
-        ;; run dialog
-        ([?\s-d] . counsel-linux-app)
-        ;; Open a terminal
-        ([s-return] . (lambda ()
-		    (interactive)
-		    (start-process "" nil "/usr/bin/urxvt")))))
-#+END_SRC
-Enable EXWM
-Enable system tray
-#+BEGIN_SRC emacs-lisp
-(require 'exwm-systemtray)
-(exwm-systemtray-enable)
-#+END_SRC
-* Language specific stuff
+* Language specific minor modes
 ** LISP
 #+BEGIN_SRC emacs-lisp
 (setq lispy-mode-hooks
@@ -273,4 +232,42 @@ Enable system tray
                    (setq show-paren-style 'expression)
                    (paredit-mode)
                    (rainbow-delimiters-mode))))
+#+END_SRC
+* Hydra
+Hydra is used so I don't have to press C-* a lot of commands that I use a lot
+
+ - Switching windows in emacs
+#+BEGIN_SRC emacs-lisp
+  (defhydra hydra-other-window (global-map "C-x o")
+    (:body-pre (other-window))
+    ("o" other-window))
+#+END_SRC
+ - Killing buffers
+#+BEGIN_SRC emacs-lisp
+  (defhydra kill-buffer (global-map "C-x k")
+    (:body-pre (kill-buffer))
+    ("k" kill-buffer)
+    ("K" kill-buffer-and-window))
+#+END_SRC
+ - Cursor Movement
+#+BEGIN_SRC emacs-lisp
+ (defhydra hydra-move (global-map "C-n")
+   (:body-pre (next-line))
+   "move"
+   ("n" next-line)
+   ("p" previous-line)
+   ("f" forward-char)
+   ("b" backward-char)
+   ("a" beginning-of-line)
+   ("e" move-end-of-line)
+   ("v" scroll-up-command)
+   ("V" scroll-down-command)
+   ("l" recenter-top-bottom))
+#+END_SRC
+ - Making windows
+#+BEGIN_SRC emacs-lisp
+  (defhydra hydra-split (global-map "C-x 2")
+    (:body-pre (split-window-horizontally))
+    ("2" split-window-horizontally)
+    ("3" split-window-vertically))
 #+END_SRC

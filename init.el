@@ -20,11 +20,11 @@
  '(display-time-mode t)
  '(package-selected-packages
    (quote
-    (spaceline doom-themes gruvbox-theme evil paredit smart-mode-line ox-twbs avy rainbow-delimiters swiper-helm counsel ivy rainbow-mode notmuch solarized-theme weechat powerline org-bullets telephone-line magit org-plus-contrib exwm)))
+    (multiple-cursors hydra company spaceline doom-themes gruvbox-theme evil paredit smart-mode-line ox-twbs avy rainbow-delimiters swiper-helm counsel ivy rainbow-mode notmuch solarized-theme weechat powerline org-bullets telephone-line magit org-plus-contrib exwm)))
  '(tool-bar-mode nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Iosevka Term" :foundry "unknown" :slant normal :weight normal :height 120 :width normal)))))
+ '(default ((t (:family "GohuFont" :foundry "Gohu" :slant normal :weight bold :height 105 :width normal)))))
