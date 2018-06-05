@@ -6,19 +6,9 @@
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
 (require 'use-package)
-
+(require 'bind-key)
 ;;set autosave dir
 (setq backup-directory-alist '(("." . "~/.autosave")))
-
-;;colors and disable window chrome
-
-(menu-bar-mode -1)
-(scroll-bar-mode -1)
-;;(load-theme 'tango-dark t)
-(fringe-mode 0)
-(set-face-attribute 'region nil :background "blue")
-(set-face-attribute 'region nil :foreground "white")
-(set-background-color "#eee")
 
 ;;display time in the mode line
 
@@ -33,7 +23,15 @@
 (setq ido-file-extensions-order '(".org" ".el" ".py" ".pl" ".c" ".md" ".markdown"))
 (ido-mode 1)
 
+;;set conkerorrc to open in javascript-mode
+
+(add-to-list 'auto-mode-alist '(".conkerrorc" . javascript-mode))
 ;;functions
+
+(defun transparency (value)
+  "Sets the transparency of the frame window. 0=transparent/100=opaque"
+  (interactive "nTransparency Value 0 - 100 opaque:")
+  (set-frame-parameter (selected-frame) 'alpha value))
 
 (defun org-open-point ()
   "Open org mode heading in another window, expand it, and narrow it"
@@ -104,7 +102,7 @@ cursor as close to its previous position as possible."
    (point)
    (progn (end-of-line 1) (point)))
   (delete-char 1))
-(global-set-key (kbd "C-k")           'delete-line)
+(global-set-key (kbd "<C-k>")           'delete-line)
 
 (defun delete-line-backward ()
   "Delete text between the beginning of the line to the cursor position. This command does not push text to `kill-ring'."
@@ -114,7 +112,7 @@ cursor as close to its previous position as possible."
     (beginning-of-line 1)
     (setq p2 (point))
     (delete-region p1 p2)))
-(global-set-key (kbd "C-S-k")         'delete-line-backward)
+(global-set-key (kbd "<C-S-k>")         'delete-line-backward)
 
 (defun delete-word (arg)
   "Delete characters forward until encountering the end of a word. With argument, do this that many times. This command does not push text to `kill-ring'."
@@ -124,13 +122,35 @@ cursor as close to its previous position as possible."
    (progn
      (forward-word arg)
      (point))))
-(global-set-key (kbd "M-d")           'delete-word)
+(bind-key "M-d" 'delete-word)
 
 (defun delete-word-backward (arg)
   "Delete characters backward until encountering the beginning of a word. With argument, do this that many times. This command does not push text to `kill-ring'."
   (interactive "p")
   (delete-word (- arg)))
 (global-set-key (kbd "<M-backspace>") 'delete-word-backward)
+
+;;other keybinds for switching buffers
+(global-set-key (kbd "M-[") 'previous-buffer)
+(global-set-key (kbd "M-]") 'next-buffer)
+
+;;top level keybinds for find-file and switch-to-buffer
+(global-set-key (kbd "M-a") 'find-file)
+(global-set-key (kbd "M-s") 'switch-to-buffer)
+
+;;change C-x k to kill current buffer, more useful than the menu
+(global-set-key (kbd "C-x k")   'kill-this-buffer)
+(global-set-key (kbd "C-x M-k") 'kill-buffer)
+;;colors and disable window chrome
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+;;(load-theme 'tango-dark t)
+(fringe-mode 0)
+(set-face-attribute 'region nil :background "blue")
+(set-face-attribute 'region nil :foreground "white")
+(set-background-color "black")
+(set-foreground-color "white")
+(transparency 80)
 
 ;;Keybinds for manipulating windows
 
@@ -196,6 +216,18 @@ cursor as close to its previous position as possible."
   (add-hook 'emacs-lisp-mode-hook 'paredit-mode)
   (add-hook 'lisp-mode-hook       'paredit-mode))
 
+;;Flymake
+(add-hook 'emacs-lisp-mode-hook 'flymake-mode)
+(add-hook 'lisp-mode-hook       'flymake-mode)
+(add-hook 'c-mode-hook          'flymake-mode)
+(add-hook 'python-mode-hook     'flymake-mode)
+(add-hook 'org-mode-hook        'flyspell-mode)
+
+;quickly overwrite highlight
+(delete-selection-mode t)
+
+
+;;open an org mode config file
 ;(require 'org)
 ;(org-babel-load-file
 ; (expand-file-name "configuration.org"
@@ -216,4 +248,10 @@ cursor as close to its previous position as possible."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "GohuFont" :foundry "Gohu" :slant normal :weight bold :height 105 :width normal)))))
+ '(default ((t (
+		:family "GohuFont"
+			:foundry "Gohu"
+			:slant   normal
+			:weight  bold
+			:height  105
+			:width   normal)))))
