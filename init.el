@@ -1,6 +1,7 @@
 ;; packaging
 (package-initialize)
 (add-to-list 'package-archives'("melpa-stable" . "https://stable.melpa.org/packages/"))
+(add-to-list 'package-archives'("melpa" . "https://melpa.org/packages/"))
 (add-to-list 'package-archives'("org"          . "https://orgmode.org/elpa/"))
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
@@ -31,6 +32,26 @@
 
 ;;functions
 
+(defun browse-file-windows (file)
+  "Run default Windows application associated with FILE.
+If no associated application, then `find-file' FILE."
+  (let ((windows-file-name (dired-replace-in-string
+                           "/" "\\" (dired-get-filename))))
+    (or (condition-case nil
+            (w32-shell-execute nil windows-file-name)
+          (error nil))
+        (find-file windows-file-name))))
+
+(defun browse-file-linux (file)
+  (dired-do-shell-command "gnome-open" nil
+                          (dired-get-marked-files t current-prefix-arg)))
+
+(defun browse-file (file)
+  (cond ((equal system-type 'gnu/linux)
+         (browse-file-linux file))
+        ((equal system-type 'windows-nt)
+(browse-file-windows file))))
+
 (defun rename1 (new-name)
   "Renames both current buffer and file it's visiting to NEW-NAME."
   (interactive (list (completing-read "New name: " nil nil nil (buffer-name))))
@@ -50,20 +71,18 @@
   "Moves both current buffer and file it's visiting to DIR."
   (interactive "DNew directory: ")
   (let* ((name (buffer-name))
-     (filename (buffer-file-name))
-     (dir
+	 (filename (buffer-file-name))
+	 (dir
           (if (string-match dir "\\(?:/\\|\\\\)$")
               (substring dir 0 -1) dir))
-     (newname (concat dir "/" name)))
+	 (newname (concat dir "/" name)))
 
     (if (not filename)
-    (message "Buffer '%s' is not visiting a file!" name)
+	(message "Buffer '%s' is not visiting a file!" name)
       (progn (copy-file filename newname 1)
              (delete-file filename)
              (set-visited-file-name newname)
-             (set-buffer-modified-p nil)
-t))))
-
+             (set-buffer-modified-p nil)))))
 (defun transparency (value)
   "Sets the transparency of the frame window. 0=transparent/100=opaque"
   (interactive "nTransparency Value 0 - 100 opaque:")
@@ -140,6 +159,34 @@ cursor as close to its previous position as possible."
   (forward-char -1))
 (global-set-key (kbd "C-z") 'jump-to-char)
 
+(defun jump-lines-up ()
+  (interactive)
+  (let* ((key (read-char-choice "Jump lines up? " (number-sequence 49 57)))
+         (lines (string-to-number (byte-to-string key))))
+    (goto-line (+ (line-number-at-pos) (- lines)))))
+(global-set-key (kbd "M-p") 'jump-lines-up)
+
+(defun jump-lines-down ()
+  (interactive)
+  (let* ((key (read-char-choice "Jump lines down? " (number-sequence 49 57)))
+         (lines (string-to-number (byte-to-string key))))
+    (goto-line (+ (line-number-at-pos) lines))))
+(global-set-key (kbd "M-n") 'jump-lines-down)
+  
+(defun gtlu (n)
+  (interactive "nHow many lines up?: ")
+  (goto-line (+ (line-number-at-pos) (* n -1))))
+(global-set-key (kbd "M-P") 'gtlu)
+
+(defun gtld (n)
+  (interactive "nHow many lines down?: ")
+  (goto-line (+ (line-number-at-pos) n)))  
+(global-set-key (kbd "M-N") 'gtld)
+
+(defun forward-multiple-words (n)
+  "Move forward in a line multiple lines"
+  (interactive "nHow many words?"))
+
 (defun delete-line ()
   "Delete text from current position to end of line char.This command does not push text to `kill-ring'."
   (interactive)
@@ -174,6 +221,12 @@ cursor as close to its previous position as possible."
   (interactive "p")
   (delete-word (- arg)))
 
+(defun split-vertical-find-file ()
+  "split the frame vertically and find a file"
+  (interactive)
+  (split-window-vertically)
+  (other-window 1)
+  (find-file))
 
 (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
 (global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
@@ -190,9 +243,14 @@ cursor as close to its previous position as possible."
 (global-set-key (kbd "я") (lambda()
 				    (interactive)
 				    (find-file "~/.emacs.d/init.el")))
-(global-set-key (kbd "Я") (lambda ())
-		(shell-command "cp /home/yur3i/.emacs.d/init.el /home/yur3i/dotfiles/init.el")
-		(find-file "~/dotfiles/init.el"))
+(global-set-key (kbd "Я") (lambda ()
+			    (interactive)
+			    (shell-command "cp ~/.emacs.d/init.el ~/dotfiles/init.el")
+			    (find-file "~/dotfiles/init.el")))
+(global-set-key (kbd "ESC ESC C") (lambda ()
+			    (interactive)
+			    (shell-command "cp ~/.emacs.d/init.el ~/dotfiles/init.el")
+			    (find-file "~/dotfiles/init.el")))
 (global-set-key (kbd "ESC ESC c") (lambda()
 				    (interactive)
 				    (find-file "~/.emacs.d/init.el")))
@@ -208,42 +266,56 @@ cursor as close to its previous position as possible."
 (global-set-key (kbd "м") (lambda()
 				    (interactive)
 				    (find-file "~/Personal.org")))
-(global-set-key (kbd "ESC ESC m") 'notmuch-hello)
-(global-set-key (kbd "и") 'notmuch-hello)
+(global-set-key (kbd "ESC ESC m") 'mu4e)
+(global-set-key (kbd "и") 'mu4e)
+(set-cursor-color "magenta")
 ;;other keybinds for switching buffers
 (global-set-key (kbd "M-[") 'previous-buffer)
 (global-set-key (kbd "M-]") 'next-buffer)
-
 ;;top level keybinds for find-file and switch-to-buffer
 (global-set-key (kbd "M-a") 'find-file)
 (global-set-key (kbd "M-s") 'switch-to-buffer)
-
-;;change C-x k to kill current buffer, more useful than the menu
+;;disable default keybinds to help get used to M-a and M-s
+;;(global-set-key (kbd "C-x C-f") 'keyboard-quit)
+;;(global-set-key (kbd "C-x b") 'keyboard-quit)
+;;(global-set-key (kbd "C-x C-b") 'keyboard-quit)
+;;change C-x k to kill current buffer, more useful than the menu 
 (global-set-key (kbd "C-x k")   'kill-this-buffer)
 (global-set-key (kbd "C-x M-k") 'kill-buffer)
 (global-set-key (kbd "л") 'kill-buffer)
 ;;colors and disable window chrome
 (set-face-attribute 'region nil :background "blue")
 (set-face-attribute 'region nil :foreground "white")
-;;(set-background-color "black")
-;;(set-foreground-color "white")
 (fringe-mode 0)
-(set-face-attribute 'fringe nil :background nil)
-;(load-theme 'leuven t)
+(set-face-attribute 'fringe nil :background "#111")
+(set-face-background 'mode-line "#555")
+(set-face-foreground 'mode-line "white")
+(set-face-background 'mode-line-inactive "black")
+(set-face-foreground 'mode-line-inactive "white")
+(set-face-attribute 'mode-line nil :box nil)
+(set-face-attribute 'mode-line-inactive nil :box nil)
 (scroll-bar-mode -1)
 (menu-bar-mode -1)
+(tool-bar-mode -1)
+(fset 'yes-or-no-p 'y-or-n-p)
+(show-paren-mode 1)
+(global-font-lock-mode 1)
 ;; kill emacsclient with C-x )
 (global-set-key (kbd "C-x )") 'delete-frame)
 ;;(transparency 80)
 ;;Second keyboard script
 (shell-command "/home/yur3i/.kbd.sh")
-
+;;make stumpwmrc use lisp mode
+(add-to-list 'auto-mode-alist '("\\.stumpwmrc\\'" . lisp-mode))
+;;undo
+(global-set-key (kbd "M-u") 'undo)
+(global-set-key (kbd "M-r") 'redo)
 ;;Keybinds for manipulating windows
 
-(global-set-key (kbd "C-<left>")      'shrink-window-horizontally)
-(global-set-key (kbd "C-<right>")     'enlarge-window-horizontally)
-(global-set-key (kbd "C-<down>")      'shrink-window)
-(global-set-key (kbd "C-<up>")        'enlarge-window)
+(global-set-key (kbd "C-S-<left>")      'shrink-window-horizontally)
+(global-set-key (kbd "C-S-<right>")     'enlarge-window-horizontally)
+(global-set-key (kbd "C-S-<down>")      'shrink-window)
+(global-set-key (kbd "C-S-<up>")        'enlarge-window)
 (global-set-key (kbd "C-x K")         'kill-buffer-and-window)
 
 ;;E-Shell
@@ -254,7 +326,7 @@ cursor as close to its previous position as possible."
   (let ((buf (eshell)))
     (switch-to-buffer (other-buffer buf))
     (switch-to-buffer-other-window buf)))
-(global-set-key (kbd "H-RET") 'eshell-other-window)
+(global-set-key (kbd "M-S-RET") 'ansi-term-other-window)
 
 ;;Hyper Key bindings
 (global-set-key (kbd "H-b") 'switch-buffer)
@@ -262,8 +334,23 @@ cursor as close to its previous position as possible."
 (global-set-key (kbd "H-k") 'kill-buffer)
 (global-set-key (kbd "H-f") 'find-file)
 
-;;Line number keybinding
+;;Line numbering
+(require 'hlinum)
+(hlinum-activate)
 (global-set-key (kbd "C-c l") 'linum-mode)
+(add-hook 'emacs-lisp-mode-hook 'linum-mode)
+(add-hook 'emacs-lisp-mode-hook 'linum-relative-mode)
+(add-hook 'python-mode-hook 'linum-mode)
+(add-hook 'python-mode-hook 'linum-relative-mode)
+(add-hook 'perl-mode-hook 'linum-mode)
+(add-hook 'perl-mode-hook 'linum-relative-mode)
+(add-hook 'CC-mode-hook 'linum-mode)
+(add-hook 'CC-mode-hook 'linum-relative-mode)
+(add-hook 'lisp-mode-hook 'linum-mode)
+(add-hook 'lisp-mode-hook 'linum-relative-mode)
+
+
+(setq linum-format "%d")
 ;;tramp
 (setq tramp-default-method "ssh")
 (set-default 'tramp-default-proxies-alist (quote ((".*" "\\`root\\'" "/ssh:%h:"))))
@@ -275,6 +362,35 @@ cursor as close to its previous position as possible."
 ;  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
 ;  (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
 ;  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)))
+
+
+;;eww
+(add-hook 'eww-mode-hook 
+	  (lambda () (local-set-key (kbd "q") 'kill-this-buffer)))
+
+
+;;Email
+(setq mu4e-html2text-command 'mu4e-shr2text)
+(setq shr-color-visible-luminance-min 60)
+(setq shr-color-visible-distance-min 5)
+(setq shr-use-colors nil)
+(advice-add #'shr-colorize-region :around (defun shr-no-colourise-region (&rest ignore)))
+(global-set-key (kbd "ESC ESC m") 'mu4e)
+(global-set-key (kbd "и") 'mu4e)
+(add-hook 'mu4e-view-mode-hook (lambda ()
+				 (setq truncate-lines t)))
+
+;;RSS
+(use-package elfeed
+  :ensure t
+  :config
+  (use-package elfeed-org
+    :ensure t)
+  (setq elfeed-feeds
+	'("http://feeds.bbci.co.uk/news/rss.xml"
+	  "https://hnrss.org/frontpage")))
+(setq browse-url-browser-function 'eww-browse-url) ; emacs browser for links
+
 
 ;;Org mode
 (use-package org-plus-contrib
@@ -300,15 +416,15 @@ cursor as close to its previous position as possible."
 (setq org-export-html-postamble nil)
 
 (defface org-block-begin-line
-  '((t (:underline "#A7A6AA" :foreground "#008ED1" :background "#EAEAFF")))
+  '((t (:underline "#111" :foreground "white" :background "#222")))
   "Face used for the line delimiting the begin of source blocks.")
 
 (defface org-block-background
-  '((t (:background "#777")))
+  '((t (:background "white" :foreground "black")))
   "Face used for the source block background.")
 
 (defface org-block-end-line
-  '((t (:overline "#A7A6AA" :foreground "#008ED1" :background "#EAEAFF")))
+  '((t (:overline "#111" :foreground "white" :background "#222")))
   "Face used for the line delimiting the end of source blocks.")
 
 ;; Emacs server
@@ -319,7 +435,7 @@ cursor as close to its previous position as possible."
   (save-some-buffers)
   (kill-emacs)
   )
-
+(global-set-key (kbd "C-x M-0") 'server-shutdown)
 (global-set-key (kbd "C-x )") 'quit-window)
 
 ;; Electric pair mode
@@ -328,6 +444,9 @@ cursor as close to its previous position as possible."
 (add-hook 'cc-mode-hook 'electric-pair-mode)
 (add-hook 'conf-mode-hook 'electric-pair-mode)
 (add-hook 'perl-mode-hook 'electric-pair-mode)
+(add-hook 'lisp-mode-hook 'electric-pair-mode)
+(add-hook 'emacs-lisp-mode-hook 'electric-pair-mode)
+
 
 ;;Company
 (use-package company
@@ -374,12 +493,6 @@ cursor as close to its previous position as possible."
     :ensure t)
   (yas-global-mode))
 
-;;Paredit
-(use-package paredit
-  :ensure t
-  :config
-  (add-hook 'emacs-lisp-mode-hook 'paredit-mode)
-  (add-hook 'lisp-mode-hook       'paredit-mode))
 
 ;;Magit
 (use-package magit
@@ -425,48 +538,13 @@ cursor as close to its previous position as possible."
 ;(org-babel-load-file
 ; (expand-file-name "configuration.org"
 ;                   user-emacs-directory))
-
-;;EMMS
-(use-package emms
-  :ensure t
-  :config
-    (require 'emms-setup)
-    (require 'emms-player-mpd)
-    (emms-all) 
-    (setq emms-seek-seconds 5)
-    (setq emms-player-list '(emms-player-mpd))
-    (setq emms-info-functions '(emms-info-mpd))
-    (setq emms-player-mpd-server-name "localhost")
-    (setq emms-player-mpd-server-port "6600")
-  :bind
-    ("s-m p" . emms)
-    ("s-m b" . emms-smart-browse)
-    ("s-m r" . emms-player-mpd-update-all-reset-cache)
-    ("<XF86AudioPrev>" . emms-previous)
-    ("<XF86AudioNext>" . emms-next)
-    ("<XF86AudioPlay>" . emms-pause)
-    ("<XF86AudioStop>" . emms-stop))
-
-;;Tabbar
-(use-package tabbar
-  :ensure t
-  :config
-  (when (require 'tabbar nil t)
-    (setq tabbar-buffer-groups-function
-          (lambda () (list "All Buffers")))
-    (setq tabbar-buffer-list-function
-          (lambda ()
-            (remove-if
-             (lambda(buffer)
-               (find (aref (buffer-name buffer) 0) " *"))
-             (buffer-list))))
-    (tabbar-mode)))
-
+	  
 ;; Expand region
 (use-package expand-region
   :ensure t
   :config
   (global-set-key (kbd "C-=") 'er/expand-region))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -474,19 +552,25 @@ cursor as close to its previous position as possible."
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    (quote
-    ("2af26301bded15f5f9111d3a161b6bfb3f4b93ec34ffa95e42815396da9cb560" "d411730c6ed8440b4a2b92948d997c4b71332acf9bb13b31e9445da16445fe43" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "95b1450c6a38a211a53fd28c1dcf242b31fcf75d394579e0b11c853423388488" "8bceed439b6d46e0234e0be965cc4d2dc899786d4ce37fbaf10fede43b1cdf79" default)))
+    ("bfdcbf0d33f3376a956707e746d10f3ef2d8d9caa1c214361c9c08f00a1c8409" "2af26301bded15f5f9111d3a161b6bfb3f4b93ec34ffa95e42815396da9cb560" "d411730c6ed8440b4a2b92948d997c4b71332acf9bb13b31e9445da16445fe43" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "95b1450c6a38a211a53fd28c1dcf242b31fcf75d394579e0b11c853423388488" "8bceed439b6d46e0234e0be965cc4d2dc899786d4ce37fbaf10fede43b1cdf79" default)))
  '(cwm-frame-internal-border 70)
  '(display-time-mode t)
  '(markdown-command "/usr/bin/pandoc")
+ '(notmuch-print-mechanism (quote notmuch-print-lpr))
+ '(notmuch-search-oldest-first nil)
  '(org-babel-load-languages (quote ((C . t) (emacs-lisp . t))))
  '(package-selected-packages
    (quote
-    (expand-region tabbar emms centered-window centered-window-mode company-jedi company-irony emmet-mode yasnippet-snippets yasnippet markdown-mode sexy-monochrome-theme elfeed-web elfeed multiple-cursors hydra company spaceline doom-themes gruvbox-theme evil paredit smart-mode-line ox-twbs avy rainbow-delimiters swiper-helm counsel ivy rainbow-mode notmuch solarized-theme weechat powerline org-bullets telephone-line magit org-plus-contrib exwm)))
+    (mu4e-contrib elfeed-org mu4e notmuch-org notmuch smartparens smart-parens htmlize hlinum zenburn-theme expand-region tabbar emms centered-window centered-window-mode company-jedi company-irony emmet-mode yasnippet-snippets yasnippet markdown-mode sexy-monochrome-theme elfeed-web elfeed multiple-cursors hydra company spaceline doom-themes gruvbox-theme evil paredit smart-mode-line ox-twbs avy rainbow-delimiters swiper-helm counsel ivy rainbow-mode solarized-theme weechat powerline org-bullets telephone-line magit org-plus-contrib exwm)))
+ '(show-paren-mode t)
  '(tool-bar-mode nil))
+
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Iosevka Term" :foundry "unknown" :slant normal :weight normal :height 119 :width normal)))))
+ '(default ((t (:inherit nil :stipple nil :background "#111" :foreground "white" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 120 :width normal :foundry "APPL" :family "Monaco"))))
+ '(cursor ((t (:background "magenta"))))
+ '(variable-pitch ((t nil))))
 
