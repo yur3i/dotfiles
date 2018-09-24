@@ -1,5 +1,7 @@
 (in-package :stumpwm)
 
+(set-prefix-key (kbd "C-i"))
+
 (defcommand kill-and-remove () ()
 	"Kills the window and removes the frame"
 	(kill)
@@ -29,13 +31,13 @@
 
 
 ;; keybinds
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-n") "next-in-frame")
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-p") "prev-in-frame")
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-f") "fnext")
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-b") "fprev")
+(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-]") "next-in-frame")
+(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-[") "prev-in-frame")
+(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-n") "fnext")
+(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-p") "fprevious")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-F") "fselect")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-RET") "exec urxvt")
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-d") "exec")
+(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-d") "exec dmenu_run")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-q") "delete")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-s") "vsplit-and-switch")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-S") "hsplit-and-switch")
@@ -73,7 +75,31 @@
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "F11") "exec wmctrl -xa urxvt")
 
 (stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "f")  "exec firefox")
-
+(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "m")  "exec /home/yur3i/.2mon.sh")
 ;; settings
+
 (setf *mouse-focus-policy*  :sloppy) ;; :click :ignore :sloppy -- Focus follows mouse
-(setf *window-border-stlye* :none) ;; :none :thick :thin :tight -- no borders
+(setf *window-border-style* :thin) ;; :none :thick :thin :tight -- no borders
+(set-win-bg-color "#444")
+(set-focus-color "yellow")
+(set-unfocus-color "#444")
+
+;; font
+;(set-font (make-instance 'xft:font :family "DejaVu Sans Mono" :subfamily "Book" :size 11))
+
+;; bar
+(set-module-dir "/home/yur3i/.stumpwm.d/modules/")
+(load-module "cpu")
+(load-module "disk")
+(load-module "mem")
+(load-module "battery-portable")
+(load-module "maildir")
+
+
+(setf *mode-line-border-width* 0)
+
+(setf *screen-mode-line-format*
+      (list
+       "BAT: %B %c %N DISK: %D MAIL: %M"
+       "^> %d"))
+(mode-line)
