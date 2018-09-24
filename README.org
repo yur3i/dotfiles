@@ -1,0 +1,6 @@
+* My dotfiles
+these are dotfiles for
+ - [[https://stumpwm.github.io/][Stumpwm]]
+ - [[https://gnu.org/s/emacs][Emacs]]
+ - [[i3][https://i3wm.org]] (not in use)
+and some other scripts.

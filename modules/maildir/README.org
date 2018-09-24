@@ -1,0 +1,18 @@
+** Usage
+
+Put:
+#+BEGIN_SRC lisp
+    (load-module "maildir")
+#+END_SRC
+into your =~/.stumpwmrc=
+
+Then you can use "%M" in your mode line format.
+You can customize the modeline format (*maildir-modeline-fmt*). See the
+documentation for *maildir-modeline-fmt* for more information.
+
+** Notes
+
+The %M mode line formatter is also used by the 'mem' module.
+
+** Tasks
+*** TODO Add per mailbox formatter

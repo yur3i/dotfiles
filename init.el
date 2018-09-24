@@ -1,4 +1,4 @@
-;; packaging
+; packaging
 (package-initialize)
 (add-to-list 'package-archives'("melpa-stable" . "https://stable.melpa.org/packages/"))
 (add-to-list 'package-archives'("melpa" . "https://melpa.org/packages/"))
@@ -31,7 +31,6 @@
 (ido-mode 1)
 
 ;;functions
-
 (defun browse-file-windows (file)
   "Run default Windows application associated with FILE.
 If no associated application, then `find-file' FILE."
@@ -262,19 +261,22 @@ cursor as close to its previous position as possible."
 				    (find-file "~/Documents")))
 (global-set-key (kbd "ESC ESC p") (lambda()
 				    (interactive)
-				    (find-file "~/Personal.org")))
+				    (find-file "~/stuff.org")))
 (global-set-key (kbd "м") (lambda()
 				    (interactive)
-				    (find-file "~/Personal.org")))
+				    (find-file "~/stuff.org")))
+(global-set-key (kbd "ESC ESC r") 'elfeed)
 (global-set-key (kbd "ESC ESC m") 'mu4e)
 (global-set-key (kbd "и") 'mu4e)
 (set-cursor-color "magenta")
 ;;other keybinds for switching buffers
 (global-set-key (kbd "M-[") 'previous-buffer)
 (global-set-key (kbd "M-]") 'next-buffer)
+
 ;;top level keybinds for find-file and switch-to-buffer
 (global-set-key (kbd "M-a") 'find-file)
 (global-set-key (kbd "M-s") 'switch-to-buffer)
+(global-set-key (kbd "M-l") 'save-buffer)
 ;;disable default keybinds to help get used to M-a and M-s
 ;;(global-set-key (kbd "C-x C-f") 'keyboard-quit)
 ;;(global-set-key (kbd "C-x b") 'keyboard-quit)
@@ -286,14 +288,6 @@ cursor as close to its previous position as possible."
 ;;colors and disable window chrome
 (set-face-attribute 'region nil :background "blue")
 (set-face-attribute 'region nil :foreground "white")
-(fringe-mode 0)
-(set-face-attribute 'fringe nil :background "#111")
-(set-face-background 'mode-line "#555")
-(set-face-foreground 'mode-line "white")
-(set-face-background 'mode-line-inactive "black")
-(set-face-foreground 'mode-line-inactive "white")
-(set-face-attribute 'mode-line nil :box nil)
-(set-face-attribute 'mode-line-inactive nil :box nil)
 (scroll-bar-mode -1)
 (menu-bar-mode -1)
 (tool-bar-mode -1)
@@ -318,6 +312,7 @@ cursor as close to its previous position as possible."
 (global-set-key (kbd "C-S-<up>")        'enlarge-window)
 (global-set-key (kbd "C-x K")         'kill-buffer-and-window)
 
+(global-set-key (kbd "C-c m") 'menu-bar-mode)
 ;;E-Shell
 (global-set-key (kbd "M-RET") 'eshell)
 (defun eshell-other-window ()
@@ -348,20 +343,18 @@ cursor as close to its previous position as possible."
 (add-hook 'CC-mode-hook 'linum-relative-mode)
 (add-hook 'lisp-mode-hook 'linum-mode)
 (add-hook 'lisp-mode-hook 'linum-relative-mode)
+(add-hook 'conf-colon-mode-hook 'linum-mode)
+(add-hook 'conf-colon-mode-hook 'linum-relative-mode)
+(add-hook 'elfeed-search-mode-hook 'linum-mode)
+(add-hook 'elfeed-search-mode-hook 'linum-relative-mode)
+
 
 
 (setq linum-format "%d")
 ;;tramp
 (setq tramp-default-method "ssh")
 (set-default 'tramp-default-proxies-alist (quote ((".*" "\\`root\\'" "/ssh:%h:"))))
-;;Multiple cursors
-;((use-package multiple-cursors
-;   :ensure t
-;   :config
-;  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
-;  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-;  (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
-;  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)))
+
 
 
 ;;eww
@@ -379,6 +372,45 @@ cursor as close to its previous position as possible."
 (global-set-key (kbd "и") 'mu4e)
 (add-hook 'mu4e-view-mode-hook (lambda ()
 				 (setq truncate-lines t)))
+(add-hook 'mu4e-view-mode-hook (lambda ()
+				 (visual-line-mode)))
+(defun mu4e-inbox ()
+  "jump to mu4e inbox"
+  (interactive)
+  (mu4e~headers-jump-to-maildir "INBOX"))
+
+(defun mu4e-update-and-inbox ()
+  "docstring"
+  (interactive "P")
+  (mu4e-update-index)
+  (mu4e-inbox))
+
+(add-hook 'mu4e-main-mode-hook (lambda ()
+				 (local-set-key (kbd "i") 'mu4e-inbox)))
+
+(add-hook 'mu4e-main-mode-hook (lambda ()
+				 (local-set-key (kbd "I") 'mu4e-update-and-inbox)))
+
+(setq
+ mu4e-maildir "~/Maildir"
+ mu4e-sent-folder "/Sent Items"
+ mu4e-drafts-folder "/Drafts"
+ mu4e-refile-folder "/Archive")
+
+(require 'org-mu4e)
+(setq org-mu4e-link-query-in-headers-mode nil)
+(add-hook 'mu4e-view-mode-hook (lambda ()
+				 (local-set-key (kbd "C-c c") 'org-capture)))
+
+
+;;Multiple cursors
+;((use-package multiple-cursors
+;   :ensure t
+;   :config
+;  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+;  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+;  (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+;  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)))
 
 ;;RSS
 (use-package elfeed
@@ -390,6 +422,8 @@ cursor as close to its previous position as possible."
 	'("http://feeds.bbci.co.uk/news/rss.xml"
 	  "https://hnrss.org/frontpage")))
 (setq browse-url-browser-function 'eww-browse-url) ; emacs browser for links
+(add-hook 'elfeed-search-mode-hook
+	  (lambda () (local-set-key (kbd "U") 'elfeed-update)))
 
 
 ;;Org mode
@@ -399,6 +433,7 @@ cursor as close to its previous position as possible."
   ;; set default files and directory
   '(org-directory "~/org")
   (setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
+  (global-set-key (kbd "C-c a") 'org-agenda)
   '(org-default-notes-file (concat org-directory "/notes.org"))
   ;; structure for emacs lisp code blocks
   (add-to-list 'org-structure-template-alist
@@ -410,6 +445,8 @@ cursor as close to its previous position as possible."
 	  (lambda() (local-set-key (kbd "C-c e") 'flyspell-auto-correct-word)))
 (add-hook 'org-mode-hook
 	  (lambda() (local-set-key (kbd "т") 'org-export-dispatch)))
+(add-hook 'org-mode-hook 'org-bullets-mode)
+
 ;; fontify org mode source blocks
 (setq org-src-fontify-natively t)
 ;; disable footer stuff in org mode
@@ -426,7 +463,15 @@ cursor as close to its previous position as possible."
 (defface org-block-end-line
   '((t (:overline "#111" :foreground "white" :background "#222")))
   "Face used for the line delimiting the end of source blocks.")
+(setq org-capture-templates
+      '(("e" "email" entry (file+headline "~/stuff.org" "Emails")
+         "* %?\n%a\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))")
+        ("p" "process-soon" entry (file+headline "~/stuff.org" "Todo")
+	 "* TODO %a %?\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))")
+	("a" "article" entry (file+headline "~/stuff.org" "Articles")
+      "* %a \n %i") ))
 
+(add-to-list 'org-agenda-files "/home/yur3i/stuff.org" 'append)
 ;; Emacs server
 
 (defun server-shutdown ()
@@ -512,13 +557,6 @@ cursor as close to its previous position as possible."
   (add-hook 'html-mode-hook 'emmet-mode)
   (add-hook 'css-mode-hook  'emmet-mode))
 
-;;Flymake
-(add-hook 'emacs-lisp-mode-hook 'flymake-mode)
-(add-hook 'lisp-mode-hook       'flymake-mode)
-(add-hook 'c-mode-hook          'flymake-mode)
-(add-hook 'python-mode-hook     'flymake-mode)
-(add-hook 'org-mode-hook        'flyspell-mode)
-
 ;quickly overwrite highlight
 (delete-selection-mode t)
 
@@ -545,6 +583,16 @@ cursor as close to its previous position as possible."
   :config
   (global-set-key (kbd "C-=") 'er/expand-region))
 
+(use-package haskell-mode
+  :ensure t)
+
+(use-package engine-mode
+  :ensure t
+  :config
+  (defengine github
+  "https://github.com/search?ref=simplesearch&q=%s"
+  :browser 'eww-browse-url))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -561,7 +609,7 @@ cursor as close to its previous position as possible."
  '(org-babel-load-languages (quote ((C . t) (emacs-lisp . t))))
  '(package-selected-packages
    (quote
-    (mu4e-contrib elfeed-org mu4e notmuch-org notmuch smartparens smart-parens htmlize hlinum zenburn-theme expand-region tabbar emms centered-window centered-window-mode company-jedi company-irony emmet-mode yasnippet-snippets yasnippet markdown-mode sexy-monochrome-theme elfeed-web elfeed multiple-cursors hydra company spaceline doom-themes gruvbox-theme evil paredit smart-mode-line ox-twbs avy rainbow-delimiters swiper-helm counsel ivy rainbow-mode solarized-theme weechat powerline org-bullets telephone-line magit org-plus-contrib exwm)))
+    (haskell-mode rust-mode ivy-rich flx mu4e-contrib elfeed-org mu4e notmuch-org notmuch smartparens smart-parens htmlize hlinum zenburn-theme expand-region tabbar emms centered-window centered-window-mode company-jedi company-irony emmet-mode yasnippet-snippets yasnippet markdown-mode sexy-monochrome-theme elfeed-web elfeed multiple-cursors hydra company spaceline doom-themes gruvbox-theme evil paredit smart-mode-line ox-twbs avy rainbow-delimiters swiper-helm counsel ivy rainbow-mode solarized-theme weechat powerline org-bullets telephone-line magit org-plus-contrib exwm)))
  '(show-paren-mode t)
  '(tool-bar-mode nil))
 
@@ -570,7 +618,8 @@ cursor as close to its previous position as possible."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:inherit nil :stipple nil :background "#111" :foreground "white" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 120 :width normal :foundry "APPL" :family "Monaco"))))
+ '(default ((t (:inherit nil :stipple nil :background "#444" :foreground "white" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight bold :height 120 :width normal :foundry "xos4" :family "Terminus"))))
+ '(company-tooltip ((t (:background "#EEE" :foreground "black"))))
  '(cursor ((t (:background "magenta"))))
+ '(fringe ((t (:background "#22240"))))
  '(variable-pitch ((t nil))))
-
