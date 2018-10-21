@@ -35,7 +35,7 @@
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-[") "prev-in-frame")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-n") "fnext")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-p") "fprevious")
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-F") "fselect")
+(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-F") "fullscreen")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-RET") "exec urxvt")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-d") "exec dmenu_run")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-q") "delete")
@@ -75,15 +75,15 @@
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "F11") "exec wmctrl -xa urxvt")
 
 (stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "f")  "exec firefox")
+(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "e")  "exec emacsclient -a \"\" -c")
 (stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "m")  "exec /home/yur3i/.2mon.sh")
 ;; settings
 
 (setf *mouse-focus-policy*  :sloppy) ;; :click :ignore :sloppy -- Focus follows mouse
 (setf *window-border-style* :thin) ;; :none :thick :thin :tight -- no borders
-(set-win-bg-color "#444")
+(set-win-bg-color "#222")
 (set-focus-color "yellow")
-(set-unfocus-color "#444")
-
+(set-unfocus-color "#222")
 ;; font
 ;(set-font (make-instance 'xft:font :family "DejaVu Sans Mono" :subfamily "Book" :size 11))
 

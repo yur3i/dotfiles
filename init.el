@@ -15,14 +15,31 @@
       ido-file-extensions-order '(".org" ".el" ".py" ".pl" ".md" ".markdown"))
 (ido-mode 1)
 
+; flyspell
+
+(defun my-save-word ()
+  (interactive)
+  (let ((current-location (point))
+         (word (flyspell-get-word)))
+    (when (consp word)    
+      (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location))))
+
 ; e-lisp mode
+
+(define-skeleton skeleton-lsk
+  "skeleton code for a local-set-key"
+  nil
+  "(local-set-key (kbd \"" _ "\") ')")
+
 (add-hook 'emacs-lisp-mode-hook
 	  (lambda ()
 	    (local-set-key (kbd "C-c e") 'eval-region)
-	    (local-set-key (kbd "C-c E") 'eval-buffer)))
+	    (local-set-key (kbd "C-c E") 'eval-buffer)
+	    (local-set-key (kbd "C-c k") 'skeleton-lsk)))
+
 ; org-mode
 
-(defun org-open-point ()
+(defun org-open-point-new-window ()
   "Open org mode heading in another window, expand it, and narrow it"
   (interactive)
   (org-beginning-of-line)
@@ -43,30 +60,52 @@
   (tab)
   (visual-line-mode))
 
+(defun org-open-point ()
+  "Open org mode heading expand it, and narrow it"
+  (interactive)
+  (org-beginning-of-line)
+  (setq goal-point (point))
+  (while (not (= goal-point (point)))
+    (goto-char goal-point)
+    (org-beginning-of-line)
+    (org-cycle)
+    (goto-char goal-point)
+    (org-beginning-of-line))
+  (call-interactively #'org-next-visible-heading)
+  (narrow-to-region goal-point (point))
+  (goto-char goal-point)
+  (fset 'tab
+	(lambda (&optional arg) "Keyboard macro." (interactive "p")
+	  (kmacro-exec-ring-item (quote ([tab] 0 "%d")) arg)))
+  (tab)
+  (visual-line-mode))
+
 (use-package org-bullets
   :ensure t)
-(use-package writeroom-mode
-  :ensure t)
  (use-package mixed-pitch
+  :ensure t)
+
+(use-package olivetti
   :ensure t)
 
 (add-hook 'org-mode-hook
 	  (lambda ()
 	    (visual-line-mode)
 	    (org-bullets-mode)
-	    (local-set-key (kbd "C-c o") 'org-open-point)
-	    (local-set-key (kbd "C-c e") 'flyspell-auto-correct-word)
 	    (flyspell-mode)
 	    (variable-pitch-mode)
 	    (mixed-pitch-mode)
-	    (local-set-key (kbd "C-c C-c") 'writeroom-mode)))
-
+	    (local-set-key (kbd "C-c o") 'org-open-point)
+   	    (local-set-key (kbd "C-c O") 'org-open-point-new-window)
+	    (local-set-key (kbd "C-c e") 'flyspell-auto-correct-word)
+	    (local-set-key (kbd "C-c E") 'my-save-word)
+	    (local-set-key (kbd "C-c C-c") 'writeroom-mode)
+	    (local-set-key (kbd "C-c c")   'count-words-region)
+	    (local-set-key (kbd "C-c M-c") 'count-words)))
 ;; fontify org mode source blocks
-(setq org-src-fontify-natively t)
-;; disable footer stuff in org mode
-(setq org-export-html-postamble nil)
-
-(setq org-capture-templates
+(setq org-src-fontify-natively t
+      org-export-html-postamble nil
+      org-capture-templates
       '(("e" "email" entry (file+headline "~/stuff.org" "Emails")
          "* %?\n%a\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))")
         ("p" "process-soon" entry (file+headline "~/stuff.org" "Todo")
@@ -76,10 +115,36 @@
 
 ; lisp mode
 (add-to-list 'auto-mode-alist '("\\.stumpwmrc\\'" . lisp-mode))
+(use-package slime
+  :ensure t)
+(add-hook 'lisp-mode-hook 'slime-mode)
+
+; rust mode
+(use-package rust-mode
+  :ensure t
+  :config
+  (use-package toml-mode
+    :ensure t))
+
+; c sharp mode
+(use-package csharp-mode
+  :ensure t)
 
 ; eww
 (add-hook 'eww-mode-hook
 	  (lambda () (local-set-key (kbd "q") 'kill-this-buffer)))
+
+; doc view
+(defun doc-view-rotate-current-page ()
+  "Rotate the current page by 90 degrees.  Requires ImageMagick installation"
+  (interactive)
+  (when (eq major-mode 'doc-view-mode)
+    ;; we are assuming current doc-view internals about cache-names
+    (let ((file-name (expand-file-name (format "page-%d.png" (doc-view-current-page)) (doc-view--current-cache-dir))))
+      ;; assume imagemagick is installed and rotate file in-place and redisplay buffer
+      (call-process-shell-command "convert" nil nil nil "-rotate" "90" (concat "\"" file-name "\"") (concat "\"" file-name "\""))
+      (clear-image-cache)
+      (doc-view-goto-page (doc-view-current-page)))))
 
 ; Email
 (advice-add #'shr-colorize-region :around (defun shr-no-colourise-region (&rest ignore)))
@@ -119,10 +184,34 @@
 				 (local-set-key (kbd "C-c c") 'org-capture)))
 
 ; HTML
-(add-hook 'html-mode-hook (lambda ()
-			    (local-set-key (kbd "C-c f") 'xah-open-file-at-cursor)
-			    (rainbow-mode)))
 
+(define-skeleton skeleton-list-item
+  "HTML list item tags"
+  nil
+  "<li>" _ "</li>")
+
+(define-skeleton skeleton-table
+  "HTML table with a list"
+  nil
+  "<ul>\n\t<li>" _ "</li>\n</ul>")
+
+(define-skeleton skeleton-code
+  "HTML code tags"
+  nil
+  "<code>" _ "</code>")
+
+(define-skeleton skeleton-pre-code
+  "Create a nested <code> tag in a <pre> tag"
+  nil
+  "<pre><code>\n" _ "\n</code></pre>")
+
+(add-hook 'html-mode-hook (lambda ()
+			    (rainbow-mode)
+			    (local-set-key (kbd "C-c f") 'xah-open-file-at-cursor)
+			    (local-set-key (kbd "C-c i") 'skeleton-list-item)
+    			    (local-set-key (kbd "C-c I") 'skeleton-table)
+			    (local-set-key (kbd "C-c p") 'skeleton-code)
+			    (local-set-key (kbd "C-c P") 'skeleton-pre-code)))
 ; RSS
 (use-package elfeed
   :ensure t
@@ -136,18 +225,21 @@
 (add-hook 'elfeed-search-mode-hook
 	  (lambda () (local-set-key (kbd "U") 'elfeed-update)))
 
-;;Magit
+;; Magit
 (use-package magit
   :ensure t
   :config
-  (global-set-key (kbd "C-x g") 'magit-status))
+  (global-set-key (kbd "C-x g") 'magit-status)
+  (global-set-key (kbd "ц") 'magit-commit)
+  (global-set-key (kbd "к") 'magit-stage-modified)
+  (global-set-key (kbd "н") 'magit-push))
 
 ; company
 (use-package company
   :ensure t
   :config
-  (setq company-idle-delay 0)
-  (setq company-minimum-prefix-length 3))
+  (setq company-idle-delay 0
+        company-minimum-prefix-length 3))
 
 (use-package rainbow-mode
   :ensure t)
@@ -158,14 +250,35 @@
   :config
   (global-set-key (kbd "C-=") 'er/expand-region))
 
-;;Yasnippet
+;; Yasnippet
 (use-package yasnippet
   :ensure t
   :config
   (use-package yasnippet-snippets
     :ensure t))
 
+;; Auto insert
+(eval-after-load 'autoinsert
+  '(define-auto-insert
+     '("\\.org\\'" . "Org skeleton")
+     '(
+       "#+SETUPFILE: /home/yur3i/.emacs.d/orgconfig.org" > \n)))
+
+(defun auto-insert-guard ()
+   "Prevent auto-insertion for files that exist already"
+   (interactive)
+   (unless (file-exists-p (buffer-file-name))
+     (auto-insert)))
+
+(add-hook 'find-file-hook 'auto-insert-guard)
+
+
+(add-hook 'dired-mode-hook (lambda ()
+			     (dired-hide-details-mode)
+			     (local-set-key (kbd "C-c d") 'dired-hide-details-mode)))
+
 ;; global functions
+
 (defun xah-open-file-at-cursor ()
   "Open the file path under cursor.
 If there is text selection, uses the text selection for path.
@@ -295,10 +408,13 @@ cursor as close to its previous position as possible."
   (yank)
   (jump-to-register ?r))
 
-; colors
-(set-face-attribute 'region nil :background "blue")
-(set-face-attribute 'region nil :foreground "white")
+; colours
+(set-face-attribute 'region  nil :background "blue")
+(set-face-attribute 'region  nil :foreground "white")
 (set-cursor-color "magenta")
+(set-face-attribute 'default nil :background "#222")
+(set-face-attribute 'default nil :foreground "#FFF")
+(set-face-attribute 'fringe nil :background "#222")
 
 ; global modes
 (menu-bar-mode -1)
@@ -313,7 +429,9 @@ cursor as close to its previous position as possible."
 (delete-selection-mode t)
 (global-prettify-symbols-mode 1)
 
-; global key binds
+; global keybinds
+(global-set-key (kbd "M-RET") 'eshell)
+
 (global-set-key (kbd "C-c f") 'xah-open-file-at-cursor)
 
 (global-set-key (kbd "ESC ESC m") 'mu4e)
@@ -378,6 +496,7 @@ cursor as close to its previous position as possible."
 (global-set-key (kbd "M-o") 'other-window)
 (global-set-key (kbd "M-O") 'other-window-reverse)
 (global-set-key (kbd "C-c l") 'linum-mode)
+(global-set-key (kbd "M-\\") 'shell-command-on-region)
 
 (fset 'yes-or-no-p 'y-or-n-p)
 
@@ -388,15 +507,17 @@ cursor as close to its previous position as possible."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (mixed-pitch mixed-pitch-mode writeroom-mode org-bullets mu4e notmuch yasnippet-snippets use-package rainbow-mode magit expand-region elfeed-org company))))
+    (slime treemacs csharp-mode c-sharp-mode toml-mode rust-mode olivetti mixed-pitch mixed-pitch-mode writeroom-mode org-bullets mu4e notmuch yasnippet-snippets use-package rainbow-mode magit expand-region elfeed-org company)))
+ '(show-paren-mode t)
+ '(tool-bar-mode nil))
 (custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(org-level-1 ((t (:inherit TeX\ Gyre\ Schola\ Regular  :height 250))))
- '(org-level-2 ((t (:inherit TeX\ Gyre\ Schola\ Regular  :height 200))))
- '(org-level-3 ((t (:inherit TeX\ Gyre\ Schola\ Regular  :height 180))))
- '(org-level-4 ((t (:inherit TeX\ Gyre\ Schola\ Regular  :height 160))))
- '(org-level-5 ((t (:inherit TeX\ Gyre\ Schola\ Regular  :height 150))))
+ '(cursor ((t (:background "magenta" :foreground "black"))))
+ '(org-level-1 ((t (:inherit TeX\ Gyre\ Schola\ Regular :height 250))))
+ '(org-level-2 ((t (:inherit TeX\ Gyre\ Schola\ Regular :height 200))))
+ '(org-level-3 ((t (:inherit TeX\ Gyre\ Schola\ Regular :height 180))))
+ '(org-level-4 ((t (:inherit TeX\ Gyre\ Schola\ Regular :height 160))))
+ '(org-level-5 ((t (:inherit TeX\ Gyre\ Schola\ Regular :height 150))))
+ '(show-paren-match ((t (:background "white" :foreground "black"))))
+ '(show-paren-mismatch ((t (:background "red" :foreground "black"))))
  '(variable-pitch ((t (:family "TeX Gyre Schola Regular" :height 145)))))
+ 
