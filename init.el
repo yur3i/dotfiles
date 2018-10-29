@@ -12,7 +12,7 @@
 (setq ido-enable-flex-matching 1
       ido-everwhere t
       ido-use-filename-at-point 'guess
-      ido-file-extensions-order '(".org" ".el" ".py" ".pl" ".md" ".markdown"))
+      ido-file-extensions-order '(".org" ".el" ".py" ".pl" ".md" ".markdown" ".java" ".ctxt" ".class"))
 (ido-mode 1)
 
 ; flyspell
@@ -130,6 +130,16 @@
 (use-package csharp-mode
   :ensure t)
 
+; haskell mode
+(use-package haskell-mode
+  :ensure t
+  :config
+  (use-package flymake-haskell-multi
+    :ensure t)
+  (add-hook 'haskell-mode-hook (lambda()
+				 flymake-mode)))
+
+
 ; eww
 (add-hook 'eww-mode-hook
 	  (lambda () (local-set-key (kbd "q") 'kill-this-buffer)))
@@ -145,6 +155,9 @@
       (call-process-shell-command "convert" nil nil nil "-rotate" "90" (concat "\"" file-name "\"") (concat "\"" file-name "\""))
       (clear-image-cache)
       (doc-view-goto-page (doc-view-current-page)))))
+(add-hook 'dov-view-mode-hook (lambda () (
+				     (auto-revert-mode))))
+
 
 ; Email
 (advice-add #'shr-colorize-region :around (defun shr-no-colourise-region (&rest ignore)))
@@ -248,7 +261,8 @@
 (use-package expand-region
   :ensure t
   :config
-  (global-set-key (kbd "C-=") 'er/expand-region))
+  (global-set-key (kbd "C-=") 'er/mark-outside-pairs)
+  (global-set-key (kbd "M-=") 'er/mark-inside-pairs))
 
 ;; Yasnippet
 (use-package yasnippet
@@ -408,6 +422,37 @@ cursor as close to its previous position as possible."
   (yank)
   (jump-to-register ?r))
 
+(defun xah-toggle-letter-case ()
+  "Toggle the letter case of current word or text selection.
+Always cycle in this order: Init Caps, ALL CAPS, all lower.
+
+URL `http://ergoemacs.org/emacs/modernization_upcase-word.html'
+Version 2017-04-19"
+  (interactive)
+  (let (
+        (deactivate-mark nil)
+        $p1 $p2)
+    (if (use-region-p)
+        (setq $p1 (region-beginning)
+              $p2 (region-end))
+      (save-excursion
+        (skip-chars-backward "[:alnum:]-_")
+        (setq $p1 (point))
+        (skip-chars-forward "[:alnum:]-_")
+        (setq $p2 (point))))
+    (when (not (eq last-command this-command))
+      (put this-command 'state 0))
+    (cond
+     ((equal 0 (get this-command 'state))
+      (upcase-initials-region $p1 $p2)
+      (put this-command 'state 1))
+     ((equal 1  (get this-command 'state))
+      (upcase-region $p1 $p2)
+      (put this-command 'state 2))
+     ((equal 2 (get this-command 'state))
+      (downcase-region $p1 $p2)
+      (put this-command 'state 0)))))
+
 ; colours
 (set-face-attribute 'region  nil :background "blue")
 (set-face-attribute 'region  nil :foreground "white")
@@ -448,7 +493,7 @@ cursor as close to its previous position as possible."
 (global-set-key (kbd "C-z") 'jump-to-char)
 (global-set-key (kbd "M-l") 'move-word-to-delimiter-backwards)
 (global-set-key (kbd "M-w") 'goto-line)
-
+(global-set-key (kbd "M-c") 'xah-toggle-letter-case)
 (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
 (global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
 
@@ -507,10 +552,14 @@ cursor as close to its previous position as possible."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (slime treemacs csharp-mode c-sharp-mode toml-mode rust-mode olivetti mixed-pitch mixed-pitch-mode writeroom-mode org-bullets mu4e notmuch yasnippet-snippets use-package rainbow-mode magit expand-region elfeed-org company)))
+    (flymake-haskell-multi haskell-mode slime treemacs csharp-mode c-sharp-mode toml-mode rust-mode olivetti mixed-pitch mixed-pitch-mode writeroom-mode org-bullets mu4e notmuch yasnippet-snippets use-package rainbow-mode magit expand-region elfeed-org company)))
  '(show-paren-mode t)
  '(tool-bar-mode nil))
 (custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  '(cursor ((t (:background "magenta" :foreground "black"))))
  '(org-level-1 ((t (:inherit TeX\ Gyre\ Schola\ Regular :height 250))))
  '(org-level-2 ((t (:inherit TeX\ Gyre\ Schola\ Regular :height 200))))
@@ -520,4 +569,3 @@ cursor as close to its previous position as possible."
  '(show-paren-match ((t (:background "white" :foreground "black"))))
  '(show-paren-mismatch ((t (:background "red" :foreground "black"))))
  '(variable-pitch ((t (:family "TeX Gyre Schola Regular" :height 145)))))
- 
