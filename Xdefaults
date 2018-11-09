@@ -1,0 +1,20 @@
+!--Terminal--!
+URxvt.background: #222
+URxvt.foreground: #FFF
+urxvt.cursorColor: magenta
+URxvt.color4: #669999
+URxvt.font: xft:Terminus:size=12
+URxvt*scrollBar: false
+
+urxvt*transparent: true
+urxvt*shading: 30
+
+!--xscreensaver--!
+xscreensaver.fade:        false
+xscreensaver.unfade: false
+!-- 2bwm --!
+twobwm.border_width: 10
+twobwm.outer_border_width: 5
+twobwm.focus_color: #161516
+twobwm.unfocus_color: #161516
+twobwm.outer_border_color: #272627
