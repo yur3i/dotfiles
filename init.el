@@ -1,31 +1,55 @@
-; packaging
+;; Packaging
 (package-initialize)
 (add-to-list 'package-archives'("melpa-stable" . "https://stable.melpa.org/packages/"))
 (add-to-list 'package-archives'("melpa" . "https://melpa.org/packages/"))
 (add-to-list 'package-archives'("org"          . "https://orgmode.org/elpa/"))
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-
 (require 'use-package)
 
-; ido
-(setq ido-enable-flex-matching 1
-      ido-everwhere t
-      ido-use-filename-at-point 'guess
-      ido-file-extensions-order '(".org" ".el" ".py" ".pl" ".md" ".markdown" ".java" ".ctxt" ".class"))
-(ido-mode 1)
+;; Hydra
+(use-package hydra
+  :ensure t)
 
-; flyspell
+;; Ivy
+(use-package ivy
+  :ensure t
+  :config
+  (ivy-mode 1)
+  (setq ivy-use-virtual-buffers t
+	enable-recursive-minibuffers t)
+  (setq ivy-re-builders-alist
+	'((t . ivy--regex-fuzzy)))
+  (global-set-key (kbd "C-s") 'swiper)
+  (global-set-key (kbd "C-c C-r") 'ivy-resume)
+  (global-set-key (kbd "M-x") 'counsel-M-x)
+  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+  (global-set-key (kbd "C-h f") 'counsel-describe-function)
+  (global-set-key (kbd "C-h v") 'counsel-describe-variable)
+  (global-set-key (kbd "C-c g") 'counsel-git)
+  (define-key ivy-minibuffer-map (kbd "C-j") 'ivy-immediate-done)
+  (define-key ivy-minibuffer-map (kbd "RET") 'ivy-alt-done)
+  (use-package all-the-icons-ivy
+    :ensure t
+    :config
+    (all-the-icons-ivy-setup)))
 
-(defun my-save-word ()
-  (interactive)
-  (let ((current-location (point))
-         (word (flyspell-get-word)))
-    (when (consp word)    
-      (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location))))
+;; Evil
+(use-package evil
+  :ensure t
+  :config
+  (evil-mode)
+  (use-package evil-leader
+    :ensure t
+    :config
+      (evil-leader/set-leader ",")
+  (evil-leader/set-key
+   "b" 'switch-to-buffer
+   "s" 'save-buffer
+   "a" 'counsel-find-file)
+  (global-evil-leader-mode)))
 
-; e-lisp mode
-
+;; Emacs Lisp
 (define-skeleton skeleton-lsk
   "skeleton code for a local-set-key"
   nil
@@ -37,114 +61,71 @@
 	    (local-set-key (kbd "C-c E") 'eval-buffer)
 	    (local-set-key (kbd "C-c k") 'skeleton-lsk)))
 
-; org-mode
-
-(defun org-open-point-new-window ()
-  "Open org mode heading in another window, expand it, and narrow it"
+;; Org Mode
+(defun org-tree-open-in-right-frame ()
   (interactive)
-  (org-beginning-of-line)
-  (setq goal-point (point))
-  (call-interactively #'clone-indirect-buffer-other-window)
-  (while (not (= goal-point (point)))
-    (goto-char goal-point)
-    (org-beginning-of-line)
-    (org-cycle)
-    (goto-char goal-point)
-    (org-beginning-of-line))
-  (call-interactively #'org-next-visible-heading)
-  (narrow-to-region goal-point (point))
-  (goto-char goal-point)
-  (fset 'tab
-	(lambda (&optional arg) "Keyboard macro." (interactive "p")
-	  (kmacro-exec-ring-item (quote ([tab] 0 "%d")) arg)))
-  (tab)
-  (visual-line-mode))
-
-(defun org-open-point ()
-  "Open org mode heading expand it, and narrow it"
-  (interactive)
-  (org-beginning-of-line)
-  (setq goal-point (point))
-  (while (not (= goal-point (point)))
-    (goto-char goal-point)
-    (org-beginning-of-line)
-    (org-cycle)
-    (goto-char goal-point)
-    (org-beginning-of-line))
-  (call-interactively #'org-next-visible-heading)
-  (narrow-to-region goal-point (point))
-  (goto-char goal-point)
-  (fset 'tab
-	(lambda (&optional arg) "Keyboard macro." (interactive "p")
-	  (kmacro-exec-ring-item (quote ([tab] 0 "%d")) arg)))
-  (tab)
-  (visual-line-mode))
+  (org-tree-to-indirect-buffer)
+  (windmove-right))
 
 (use-package org-bullets
   :ensure t)
  (use-package mixed-pitch
   :ensure t)
+(use-package writeroom-mode
+  :ensure t
+  :config
+  (setq  writeroom-mode-line nil))	 
 
-(use-package olivetti
-  :ensure t)
+(define-skeleton skeleton-citation
+  "Skeleton LaTeX citation"
+  nil
+  "\\cite{" _ "}")
 
 (add-hook 'org-mode-hook
 	  (lambda ()
 	    (visual-line-mode)
-	    (org-bullets-mode)
-	    (flyspell-mode)
-	    (variable-pitch-mode)
-	    (mixed-pitch-mode)
-	    (local-set-key (kbd "C-c o") 'org-open-point)
-   	    (local-set-key (kbd "C-c O") 'org-open-point-new-window)
-	    (local-set-key (kbd "C-c e") 'flyspell-auto-correct-word)
+	    (local-set-key (kbd "C-c o") 'org-tree-to-indirect-buffer)
+   	    (local-set-key (kbd "C-c O") (lambda ()
+					   (org-tree-to-indirect-buffer)
+					   (other-window)
+					   (next-line)))
 	    (local-set-key (kbd "C-c E") 'my-save-word)
 	    (local-set-key (kbd "C-c C-c") 'writeroom-mode)
 	    (local-set-key (kbd "C-c c")   'count-words-region)
-	    (local-set-key (kbd "C-c M-c") 'count-words)))
-;; fontify org mode source blocks
-(setq org-src-fontify-natively t
-      org-export-html-postamble nil
-      org-capture-templates
-      '(("e" "email" entry (file+headline "~/stuff.org" "Emails")
-         "* %?\n%a\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))")
-        ("p" "process-soon" entry (file+headline "~/stuff.org" "Todo")
-	 "* TODO %a %?\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))")
-	("a" "article" entry (file+headline "~/stuff.org" "Articles")
-      "* %a \n %i") ))
+	    (local-set-key (kbd "C-c M-c") 'count-words)
+	    (local-set-key (kbd "C-c r") 'skeleton-citation)
+	    (local-set-key (kbd "C-c s") 'org-schedule)
+	    (local-set-key (kbd "C-c e") 'org-ctrl-c-ctrl-c)
+	    (local-unset-key (kbd "M-a"))))
 
-; lisp mode
+;; Lisp
 (add-to-list 'auto-mode-alist '("\\.stumpwmrc\\'" . lisp-mode))
 (use-package slime
-  :ensure t)
+  :ensure t
+  :config
+  (setq inferior-lisp-program "/usr/bin/sbcl")
+  (add-hook 'inferior-lisp-mode-hook (lambda ()
+				       (inferior-slime-mode t)))
+
+  (setq slime-contribs '(slime-fancy)))
+
 (add-hook 'lisp-mode-hook 'slime-mode)
 
-; rust mode
-(use-package rust-mode
+;; Scheme
+(use-package geiser
   :ensure t
   :config
-  (use-package toml-mode
-    :ensure t))
+  (setq geiser-active-implementations '(chez)))
 
-; c sharp mode
-(use-package csharp-mode
+;; CC
+(use-package irony
   :ensure t)
+;; tabs
+(setq-default c-basic-offset 8)
+(setq-default indent-tabs-mode t)
+(setq-default tab-width 8)
 
-; haskell mode
-(use-package haskell-mode
-  :ensure t
-  :config
-  (use-package flymake-haskell-multi
-    :ensure t)
-  (add-hook 'haskell-mode-hook (lambda()
-				 flymake-mode)))
-
-
-; eww
-(add-hook 'eww-mode-hook
-	  (lambda () (local-set-key (kbd "q") 'kill-this-buffer)))
-
-; doc view
+;; Doc View
 (defun doc-view-rotate-current-page ()
   "Rotate the current page by 90 degrees.  Requires ImageMagick installation"
   (interactive)
@@ -156,48 +137,11 @@
       (clear-image-cache)
       (doc-view-goto-page (doc-view-current-page)))))
 (add-hook 'dov-view-mode-hook (lambda () (
-				     (auto-revert-mode))))
-
-
-; Email
-(advice-add #'shr-colorize-region :around (defun shr-no-colourise-region (&rest ignore)))
-
-(add-hook 'mu4e-view-mode-hook (lambda ()
-				 (setq truncate-lines t)
-				 (visual-line-mode)))
-
-(defun mu4e-inbox ()
-  "jump to mu4e inbox"
-  (interactive)
-  (mu4e~headers-jump-to-maildir "INBOX"))
-
-(defun mu4e-update-and-inbox ()
-  "docstring"
-  (interactive "P")
-  (mu4e-update-index)
-  (mu4e-inbox))
-
-(add-hook 'mu4e-main-mode-hook (lambda ()
-				 (local-set-key (kbd "i") 'mu4e-inbox)
-				 (local-set-key (kbd "I") 'mu4e-update-and-inbox)))
-
-(setq
- mu4e-maildir "~/Maildir"
- mu4e-sent-folder "/Sent Items"
- mu4e-drafts-folder "/Drafts"
- mu4e-refile-folder "/Archive"
- mu4e-html2text-command 'mu4e-shr2text
- shr-color-visible-luminance-min 60
- shr-color-visible-distance-min 5
- shr-use-colors nil)
-
-(require 'org-mu4e)
-(setq org-mu4e-link-query-in-headers-mode nil)
-(add-hook 'mu4e-view-mode-hook (lambda ()
-				 (local-set-key (kbd "C-c c") 'org-capture)))
-
-; HTML
-
+				     (auto-revert-mode)
+				     (local-set-key (kbd "M-{") 'doc-view-previous-page)
+     				     (local-set-key (kbd "M-{") 'doc-view-next-page)
+				     )))
+;; HTML
 (define-skeleton skeleton-list-item
   "HTML list item tags"
   nil
@@ -218,25 +162,24 @@
   nil
   "<pre><code>\n" _ "\n</code></pre>")
 
+(use-package emmet-mode
+  :ensure t)
+
 (add-hook 'html-mode-hook (lambda ()
 			    (rainbow-mode)
+			    (emmet-mode)
 			    (local-set-key (kbd "C-c f") 'xah-open-file-at-cursor)
 			    (local-set-key (kbd "C-c i") 'skeleton-list-item)
     			    (local-set-key (kbd "C-c I") 'skeleton-table)
 			    (local-set-key (kbd "C-c p") 'skeleton-code)
 			    (local-set-key (kbd "C-c P") 'skeleton-pre-code)))
-; RSS
-(use-package elfeed
-  :ensure t
-  :config
-  (use-package elfeed-org
-    :ensure t)
-  (setq elfeed-feeds
-	'("http://feeds.bbci.co.uk/news/rss.xml"
-	  "https://hnrss.org/frontpage")))
-(setq browse-url-browser-function 'eww-browse-url) ; emacs browser for links
-(add-hook 'elfeed-search-mode-hook
-	  (lambda () (local-set-key (kbd "U") 'elfeed-update)))
+(require 'eww)
+
+(defun eww-current ()
+  "Render HTML in the current buffer with EWW"
+  (interactive)
+  (beginning-of-buffer)
+  (eww-display-html 'utf8 (buffer-name)))
 
 ;; Magit
 (use-package magit
@@ -247,7 +190,16 @@
   (global-set-key (kbd "к") 'magit-stage-modified)
   (global-set-key (kbd "н") 'magit-push))
 
-; company
+;; Java
+(use-package meghanada
+  :ensure t
+  :config
+  (add-hook 'java-mode-hook
+	    (lambda ()
+	      (meghanada-mode t))))
+
+;; Minor Modes
+;; Company
 (use-package company
   :ensure t
   :config
@@ -261,7 +213,18 @@
 (use-package expand-region
   :ensure t
   :config
-  (global-set-key (kbd "C-=") 'er/expand-region))
+  (global-set-key (kbd "C-=") 'er/expand-region)
+  (defhydra hydra-expand-region ()
+    "region: "
+    ("v" er/expand-region "expand")
+    ("x" er/contract-region "contract"))
+  (evil-define-key 'visual 'global (kbd "v") 'hydra-expand-region/body))
+
+;; Avy
+(use-package avy
+  :ensure t
+  :config
+  (global-set-key (kbd "C-j") 'avy-go-to-char))
 
 ;; Yasnippet
 (use-package yasnippet
@@ -290,9 +253,94 @@
 			     (dired-hide-details-mode)
 			     (local-set-key (kbd "C-c d") 'dired-hide-details-mode)))
 
-;; global functions
 
-(defvar xah-brackets nil "string of left/right brackets pairs.")
+;; smart parens
+(use-package smartparens
+  :ensure t
+  :config
+  (require 'smartparens-config)
+  (smartparens-global-mode)
+(defhydra hydra-smartparens (:hint nil)
+  "
+ Moving^^^^                       Slurp & Barf^^   Wrapping^^            Sexp juggling^^^^               Destructive
+------------------------------------------------------------------------------------------------------------------------
+ [_a_] beginning  [_n_] down      [_h_] bw slurp   [_R_]   rewrap        [_S_] split   [_t_] transpose   [_c_] change inner  [_w_] copy
+ [_e_] end        [_N_] bw down   [_H_] bw barf    [_u_]   unwrap        [_s_] splice  [_A_] absorb      [_C_] change outer
+ [_f_] forward    [_p_] up        [_l_] slurp      [_U_]   bw unwrap     [_r_] raise   [_E_] emit        [_k_] kill          [_g_] quit
+ [_b_] backward   [_P_] bw up     [_L_] barf       [_(__{__[_] wrap (){}[]   [_j_] join    [_o_] convolute   [_K_] bw kill       [_q_] quit"
+  ;; Moving
+  ("a" sp-beginning-of-sexp)
+  ("e" sp-end-of-sexp)
+  ("f" sp-forward-sexp)
+  ("b" sp-backward-sexp)
+  ("n" sp-down-sexp)
+  ("N" sp-backward-down-sexp)
+  ("p" sp-up-sexp)
+  ("P" sp-backward-up-sexp)
+  
+  ;; Slurping & barfing
+  ("h" sp-backward-slurp-sexp)
+  ("H" sp-backward-barf-sexp)
+  ("l" sp-forward-slurp-sexp)
+  ("L" sp-forward-barf-sexp)
+  
+  ;; Wrapping
+  ("R" sp-rewrap-sexp)
+  ("u" sp-unwrap-sexp)
+  ("U" sp-backward-unwrap-sexp)
+  ("(" sp-wrap-round)
+  ("{" sp-wrap-curly)
+  ("[" sp-wrap-square)
+  
+  ;; Sexp juggling
+  ("S" sp-split-sexp)
+  ("s" sp-splice-sexp)
+  ("r" sp-raise-sexp)
+  ("j" sp-join-sexp)
+  ("t" sp-transpose-sexp)
+  ("A" sp-absorb-sexp)
+  ("E" sp-emit-sexp)
+  ("o" sp-convolute-sexp)
+  
+  ;Destructive editing
+  ("c" sp-change-inner :exit t)
+  ("C" sp-change-enclosing :exit t)
+  ("k" sp-kill-sexp)
+  ("K" sp-backward-kill-sexp)
+  ("w" sp-copy-sexp)
+
+  ("q" nil)
+  ("g" nil))
+  (define-prefix-command 'sp-map)
+  (global-set-key (kbd "C-t")   'sp-map)
+  (global-set-key (kbd "C-t r") 'sp-rewrap-sexp)
+  (global-set-key (kbd "C-t {") 'sp-wrap-curly)
+  (global-set-key (kbd "C-t [") 'sp-wrap-square)
+  (global-set-key (kbd "C-t (") 'sp-wrap-round)
+  (global-set-key (kbd "M-n")   'sp-next-sexp)
+  (global-set-key (kbd "M-p")   'sp-previous-sexp)
+  (evil-leader/set-key
+    "p" 'hydra-smartparens/body))
+
+
+;; multiple cursors
+(use-package multiple-cursors
+  :ensure t
+  :config
+  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+  (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this))
+
+(use-package flycheck
+  :ensure t)
+
+(defun transparency (value)
+  "Sets the transparency of the frame window. 0=transparent/100=opaque"
+  (interactive "nTransparency Value 0 - 100 opaque:")
+(set-frame-parameter (selected-frame) 'alpha value))
+
+(defvar xah-brackets nil "String of left/right brackets pairs.")
 (setq xah-brackets "()[]{}<>（）［］｛｝⦅⦆〚〛⦃⦄“”‘’‹›«»「」〈〉《》【】〔〕⦗⦘『』〖〗〘〙｢｣⟦⟧⟨⟩⟪⟫⟮⟯⟬⟭⌈⌉⌊⌋⦇⦈⦉⦊❛❜❝❞❨❩❪❫❴❵❬❭❮❯❰❱❲❳〈〉⦑⦒⧼⧽﹙﹚﹛﹜﹝﹞⁽⁾₍₎⦋⦌⦍⦎⦏⦐⁅⁆⸢⸣⸤⸥⟅⟆⦓⦔⦕⦖⸦⸧⸨⸩｟｠⧘⧙⧚⧛⸜⸝⸌⸍⸂⸃⸄⸅⸉⸊᚛᚜༺༻༼༽⏜⏝⎴⎵⏞⏟⏠⏡﹁﹂﹃﹄︹︺︻︼︗︘︿﹀︽︾﹇﹈︷︸")
 
 (defvar xah-left-brackets '("(" "{" "[" "<" "〔" "【" "〖" "〈" "《" "「" "『" "“" "‘" "‹" "«" )
@@ -450,7 +498,8 @@ cursor as close to its previous position as possible."
   (forward-char)
   (let ((case-fold-search nil)); not sure if I want this
     (search-forward (char-to-string char) nil nil arg))
-  (forward-char -1))
+  (forward-char -1)
+  (forward-char))
 
 (defun move-word-to-delimiter-backwards ()
   "Moves the word to the nearest delimiter"
@@ -492,15 +541,33 @@ Version 2017-04-19"
       (downcase-region $p1 $p2)
       (put this-command 'state 0)))))
 
-; colours
-(set-face-attribute 'region  nil :background "blue")
-(set-face-attribute 'region  nil :foreground "white")
-(set-cursor-color "magenta")
-(set-face-attribute 'default nil :background "#222")
-(set-face-attribute 'default nil :foreground "#FFF")
-(set-face-attribute 'fringe nil :background "#222")
+;; colours
 
-; global modes
+(use-package zenburn-theme
+	     :ensure t)
+
+(load-theme 'zenburn t)
+(set-cursor-color "magenta")
+;;(transparency 80)
+(set-face-attribute 'region    nil :background "blue")
+(set-face-attribute 'region    nil :foreground "white")
+;(set-face-attribute 'default   nil :foreground "#FFFFFF")
+;(set-face-attribute 'default   nil :background "#000000")
+;(set-face-attribute 'fringe    nil :background "#000000")
+;;(set-face-attribute 'mode-line nil :box '(:width 0))
+;;(set-face-attribute 'mode-line-inactive nil :box '(:width 0))
+
+;; Mode line
+(defun d/flycheck-lighter (state)
+  "Return flycheck information for the given error type STATE.
+
+Source: https://git.io/vQKzv"
+  (let* ((counts (flycheck-count-errors flycheck-current-errors))
+         (errorp (flycheck-has-current-errors-p state))
+         (err (or (cdr (assq state counts)) "?"))
+         (running (eq 'running flycheck-last-status-change)))
+    (if (or errorp running) (format "•%s" err))))
+; global minor modes
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
@@ -512,8 +579,14 @@ Version 2017-04-19"
 (yas-global-mode)
 (delete-selection-mode t)
 (global-prettify-symbols-mode 1)
+(global-flycheck-mode)
 
 ; global keybinds
+(global-set-key (kbd "M-<") 'shrink-window-horizontally)
+(global-set-key (kbd "M->") 'grow-window-horizontally)
+(global-set-key (kbd "M-,") 'shrink-window)
+(global-set-key (kbd "M-,") 'grow-window)
+
 (global-set-key (kbd "M-RET") 'eshell)
 
 (global-set-key (kbd "C-c f") 'xah-open-file-at-cursor)
@@ -523,15 +596,16 @@ Version 2017-04-19"
 
 (global-set-key (kbd "C-c m") 'menu-bar-mode)
 
-
+(global-unset-key (kbd "M-s"))
 (global-set-key (kbd "M-s") 'save-buffer)
+(global-unset-key (kbd "M-a"))
 (global-set-key (kbd "M-a") 'find-file)
+
 (global-set-key (kbd "C-x k")   'kill-this-buffer)
 (global-set-key (kbd "C-x M-k") 'kill-buffer)
 
 (global-set-key (kbd "C-z") 'jump-to-char)
 (global-set-key (kbd "M-l") 'move-word-to-delimiter-backwards)
-(global-set-key (kbd "M-w") 'goto-line)
 (global-set-key (kbd "M-c") 'xah-toggle-letter-case)
 (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
 (global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
@@ -589,15 +663,24 @@ Version 2017-04-19"
 (global-set-key (kbd "M-<left>")  'shrink-window-horizontally)
 (global-set-key (kbd "M-<up>")    'enlarge-window)
 (global-set-key (kbd "M-<down>")  'shrink-window)
+
+(global-set-key (kbd "C-c C") 'comment-dwim)
+
+;; disable size hinting
+(setq frame-resize-pixelwise t)
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   (quote
+    ("2047464bf6781156ebdac9e38a17b97bd2594b39cfeaab561afffcbbe19314e2" "fe666e5ac37c2dfcf80074e88b9252c71a22b6f5d2f566df9a7aa4f9bea55ef8" "6b289bab28a7e511f9c54496be647dc60f5bd8f9917c9495978762b99d8c96a0" "cab317d0125d7aab145bc7ee03a1e16804d5abdfa2aa8738198ac30dc5f7b569" "d1cc05d755d5a21a31bced25bed40f85d8677e69c73ca365628ce8024827c9e3" "d1b4990bd599f5e2186c3f75769a2c5334063e9e541e37514942c27975700370" "75d3dde259ce79660bac8e9e237b55674b910b470f313cdf4b019230d01a982a" "151bde695af0b0e69c3846500f58d9a0ca8cb2d447da68d7fbf4154dcf818ebc" "93a0885d5f46d2aeac12bf6be1754faa7d5e28b27926b8aa812840fe7d0b7983" "100e7c5956d7bb3fd0eebff57fde6de8f3b9fafa056a2519f169f85199cc1c96" "d2e9c7e31e574bf38f4b0fb927aaff20c1e5f92f72001102758005e53d77b8c9" "1c082c9b84449e54af757bcae23617d11f563fc9f33a832a8a2813c4d7dfb652" "6b2636879127bf6124ce541b1b2824800afc49c6ccd65439d6eb987dbf200c36" "6d589ac0e52375d311afaa745205abb6ccb3b21f6ba037104d71111e7e76a3fc" "8aca557e9a17174d8f847fb02870cb2bb67f3b6e808e46c0e54a44e3e18e1020" "a3fa4abaf08cc169b61dea8f6df1bbe4123ec1d2afeb01c17e11fdc31fc66379" "4697a2d4afca3f5ed4fdf5f715e36a6cac5c6154e105f3596b44a4874ae52c45" "7e78a1030293619094ea6ae80a7579a562068087080e01c2b8b503b27900165c" default)))
  '(org-agenda-files nil)
  '(package-selected-packages
    (quote
-    (flymake-haskell-multi haskell-mode slime treemacs csharp-mode c-sharp-mode toml-mode rust-mode olivetti mixed-pitch mixed-pitch-mode writeroom-mode org-bullets mu4e notmuch yasnippet-snippets use-package rainbow-mode magit expand-region elfeed-org company)))
+    (elfeed hydra evil-leader avy all-the-icons-ivy ivy helm slime-company exwm geiser emmet-mode irony cython-mode cyberpunk-theme multiple-cursors meghanada doom-themes neotree doom-modeline flymake-haskell-multi haskell-mode slime treemacs csharp-mode c-sharp-mode toml-mode rust-mode olivetti mixed-pitch mixed-pitch-mode writeroom-mode org-bullets mu4e notmuch yasnippet-snippets use-package rainbow-mode magit expand-region elfeed-org company)))
  '(show-paren-mode t)
  '(tool-bar-mode nil))
 (custom-set-faces
@@ -605,12 +688,10 @@ Version 2017-04-19"
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(default ((t (:family "Iosevka" :foundry "SRC" :slant normal :weight normal :height 128 :width normal))))
  '(cursor ((t (:background "magenta" :foreground "black"))))
- '(org-level-1 ((t (:inherit TeX\ Gyre\ Schola\ Regular :height 250))))
- '(org-level-2 ((t (:inherit TeX\ Gyre\ Schola\ Regular :height 200))))
- '(org-level-3 ((t (:inherit TeX\ Gyre\ Schola\ Regular :height 180))))
- '(org-level-4 ((t (:inherit TeX\ Gyre\ Schola\ Regular :height 160))))
- '(org-level-5 ((t (:inherit TeX\ Gyre\ Schola\ Regular :height 150))))
- '(show-paren-match ((t (:background "white" :foreground "black"))))
- '(show-paren-mismatch ((t (:background "red" :foreground "black"))))
- '(variable-pitch ((t (:family "TeX Gyre Schola Regular" :height 145)))))
+ '(custom-comment ((t (:background "gray40"))))
+ '(font-lock-comment-face ((t (:foreground "Firebrick" :slant italic))))
+ '(highlight ((t (:background "#0000FF" :foreground "white"))))
+ '(show-paren-match ((t (:background "cyan" :foreground "black"))))
+ '(show-paren-mismatch ((t (:background "red" :foreground "black")))))
