@@ -39,6 +39,7 @@
   :ensure t
   :config
   (evil-mode)
+  (evil-define-key 'visual 'global (kbd "TAB") 'indent-for-tab-command)
   (use-package evil-leader
     :ensure t
     :config
@@ -115,11 +116,31 @@
 (use-package geiser
   :ensure t
   :config
-  (setq geiser-active-implementations '(chez)))
+  (setq geiser-default-implementation 'chez))
+
+;; Python
+(use-package jedi
+  :ensure t
+  :config
+  (add-hook 'python-mode-hook (lambda ()
+				(jedi:setup)))
+  (setq jedi:complete-on-dot t))
 
 ;; CC
 (use-package irony
   :ensure t)
+;; RSS
+(use-package elfeed
+  :ensure t
+  :config
+  (add-to-list 'evil-emacs-state-modes 'elfeed-search-mode)
+  (add-to-list 'evil-emacs-state-modes 'elfeed-show-mode)
+ (setq elfeed-feeds
+      '("http://nullprogram.com/feed/"
+        "http://planet.emacsen.org/atom.xml"
+	"http://feeds.reuters.com/reuters/UKdomesticNews"
+	"http://feeds.reuters.com/reuters/technologyNews"
+	"https://edavis.github.io/hnrss/#firehose-feeds")))
 ;; tabs
 (setq-default c-basic-offset 8)
 (setq-default indent-tabs-mode t)
@@ -181,6 +202,23 @@
   (beginning-of-buffer)
   (eww-display-html 'utf8 (buffer-name)))
 
+(use-package web-beautify
+  :ensure t)
+(use-package web-mode
+  :ensure t
+  :config
+  (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+  (setq web-mode-ac-sources-alist
+	'(("css" . (ac-source-css-property))
+	  ("html" . (ac-source-words-in-buffer ac-source-abbrev))))
+  (add-hook 'web-mode-hook (lambda ()
+			    (rainbow-mode)
+			    (emmet-mode)
+			    (local-set-key (kbd "C-c f") 'xah-open-file-at-cursor)
+			    (local-set-key (kbd "C-c i") 'skeleton-list-item)
+    			    (local-set-key (kbd "C-c I") 'skeleton-table)
+			    (local-set-key (kbd "C-c p") 'skeleton-code)
+			    (local-set-key (kbd "C-c P") 'skeleton-pre-code))))
 ;; Magit
 (use-package magit
   :ensure t
@@ -217,14 +255,14 @@
   (defhydra hydra-expand-region ()
     "region: "
     ("v" er/expand-region "expand")
-    ("x" er/contract-region "contract"))
+    ("V" er/contract-region "contract"))
   (evil-define-key 'visual 'global (kbd "v") 'hydra-expand-region/body))
 
 ;; Avy
 (use-package avy
   :ensure t
   :config
-  (global-set-key (kbd "C-j") 'avy-go-to-char))
+  (global-set-key (kbd "C-;") 'avy-go-to-char))
 
 ;; Yasnippet
 (use-package yasnippet
@@ -541,18 +579,12 @@ Version 2017-04-19"
       (downcase-region $p1 $p2)
       (put this-command 'state 0)))))
 
-;; colours
-
-(use-package zenburn-theme
-	     :ensure t)
-
-(load-theme 'zenburn t)
 (set-cursor-color "magenta")
 ;;(transparency 80)
 (set-face-attribute 'region    nil :background "blue")
 (set-face-attribute 'region    nil :foreground "white")
-;(set-face-attribute 'default   nil :foreground "#FFFFFF")
-;(set-face-attribute 'default   nil :background "#000000")
+(set-face-attribute 'default   nil :foreground "#FF0000")
+(set-face-attribute 'default   nil :background "#000000")
 ;(set-face-attribute 'fringe    nil :background "#000000")
 ;;(set-face-attribute 'mode-line nil :box '(:width 0))
 ;;(set-face-attribute 'mode-line-inactive nil :box '(:width 0))
@@ -677,10 +709,12 @@ Source: https://git.io/vQKzv"
  '(custom-safe-themes
    (quote
     ("2047464bf6781156ebdac9e38a17b97bd2594b39cfeaab561afffcbbe19314e2" "fe666e5ac37c2dfcf80074e88b9252c71a22b6f5d2f566df9a7aa4f9bea55ef8" "6b289bab28a7e511f9c54496be647dc60f5bd8f9917c9495978762b99d8c96a0" "cab317d0125d7aab145bc7ee03a1e16804d5abdfa2aa8738198ac30dc5f7b569" "d1cc05d755d5a21a31bced25bed40f85d8677e69c73ca365628ce8024827c9e3" "d1b4990bd599f5e2186c3f75769a2c5334063e9e541e37514942c27975700370" "75d3dde259ce79660bac8e9e237b55674b910b470f313cdf4b019230d01a982a" "151bde695af0b0e69c3846500f58d9a0ca8cb2d447da68d7fbf4154dcf818ebc" "93a0885d5f46d2aeac12bf6be1754faa7d5e28b27926b8aa812840fe7d0b7983" "100e7c5956d7bb3fd0eebff57fde6de8f3b9fafa056a2519f169f85199cc1c96" "d2e9c7e31e574bf38f4b0fb927aaff20c1e5f92f72001102758005e53d77b8c9" "1c082c9b84449e54af757bcae23617d11f563fc9f33a832a8a2813c4d7dfb652" "6b2636879127bf6124ce541b1b2824800afc49c6ccd65439d6eb987dbf200c36" "6d589ac0e52375d311afaa745205abb6ccb3b21f6ba037104d71111e7e76a3fc" "8aca557e9a17174d8f847fb02870cb2bb67f3b6e808e46c0e54a44e3e18e1020" "a3fa4abaf08cc169b61dea8f6df1bbe4123ec1d2afeb01c17e11fdc31fc66379" "4697a2d4afca3f5ed4fdf5f715e36a6cac5c6154e105f3596b44a4874ae52c45" "7e78a1030293619094ea6ae80a7579a562068087080e01c2b8b503b27900165c" default)))
+ '(ivy-mode t)
+ '(ivy-use-virtual-buffers t)
  '(org-agenda-files nil)
  '(package-selected-packages
    (quote
-    (elfeed hydra evil-leader avy all-the-icons-ivy ivy helm slime-company exwm geiser emmet-mode irony cython-mode cyberpunk-theme multiple-cursors meghanada doom-themes neotree doom-modeline flymake-haskell-multi haskell-mode slime treemacs csharp-mode c-sharp-mode toml-mode rust-mode olivetti mixed-pitch mixed-pitch-mode writeroom-mode org-bullets mu4e notmuch yasnippet-snippets use-package rainbow-mode magit expand-region elfeed-org company)))
+    (web-beautify web-mode jedi elfeed hydra evil-leader avy all-the-icons-ivy ivy helm slime-company exwm geiser emmet-mode irony cython-mode cyberpunk-theme multiple-cursors meghanada doom-themes neotree doom-modeline flymake-haskell-multi haskell-mode slime treemacs csharp-mode c-sharp-mode toml-mode rust-mode olivetti mixed-pitch mixed-pitch-mode writeroom-mode org-bullets mu4e notmuch yasnippet-snippets use-package rainbow-mode magit expand-region elfeed-org company)))
  '(show-paren-mode t)
  '(tool-bar-mode nil))
 (custom-set-faces
@@ -688,10 +722,13 @@ Source: https://git.io/vQKzv"
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Iosevka" :foundry "SRC" :slant normal :weight normal :height 128 :width normal))))
  '(cursor ((t (:background "magenta" :foreground "black"))))
  '(custom-comment ((t (:background "gray40"))))
  '(font-lock-comment-face ((t (:foreground "Firebrick" :slant italic))))
  '(highlight ((t (:background "#0000FF" :foreground "white"))))
+ '(ivy-current-match ((t (:background "light gray" :foreground "black"))))
+ '(ivy-minibuffer-match-face-2 ((t (:background "cyan" :weight bold))))
+ '(ivy-minibuffer-match-face-3 ((t (:background "#00BBBB" :weight bold))))
+ '(ivy-minibuffer-match-face-4 ((t (:background "#00bbff" :weight bold))))
  '(show-paren-match ((t (:background "cyan" :foreground "black"))))
  '(show-paren-mismatch ((t (:background "red" :foreground "black")))))
