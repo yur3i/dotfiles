@@ -1,20 +1,115 @@
-!--Terminal--!
-URxvt.background: #222
-URxvt.foreground: #FFF
+URxvt.scrollBar: off
+urxvt.font: xft:xos4 Terminus:size=9
 urxvt.cursorColor: magenta
-URxvt.color4: #669999
-URxvt.font: xft:Terminus:size=12
-URxvt*scrollBar: false
+! original
+! urxvt.foreground: #f6f3e8
+! urxvt.background: #242424
 
-urxvt*transparent: true
-urxvt*shading: 30
+! preferred
+urxvt.foreground: #f6f3e8
+urxvt.background: #303030
 
-!--xscreensaver--!
-xscreensaver.fade:        false
-xscreensaver.unfade: false
-!-- 2bwm --!
-twobwm.border_width: 10
-twobwm.outer_border_width: 5
-twobwm.focus_color: #161516
-twobwm.unfocus_color: #161516
-twobwm.outer_border_color: #272627
+! brown
+! urxvt.foreground: #f6f3e8
+! urxvt.background: #423323
+
+! urxvt.cursorColor: #606060
+! urxvt.cursorColor: red
+
+! darker
+! urxvt.foreground: #aaaaaa
+! urxvt.background: #242424
+
+! inspired by principles video
+! urxvt.foreground: #abb1ad
+! urxvt.background: #454545
+
+! exp
+! urxvt.foreground: #cccccc
+! urxvt.background: #404040
+
+! more contrast
+! urxvt.foreground: #dadada
+! urxvt.background: #151515
+
+! urxvt.foreground: #999999
+! urxvt.foreground: #cccccc
+! urxvt.background: #1e1e1e
+
+! sugar light
+! urxvt.foreground: #aa8866
+! urxvt.background: #472d1e
+
+! urxvt.color0: #2e3436
+! urxvt.color0: #404040
+urxvt.color0: #3d3d3d
+! urxvt.color1: #cc0000
+urxvt.color1: #cc3300
+! urxvt.color2: #4e9a06
+urxvt.color2: #00cc00
+! urxvt.color2: #87ffaf
+! urxvt.color3: #c4a000
+! urxvt.color3: #fcaf3e
+! gold3 looks better than gold4 but is not as readable
+urxvt.color3: gold3
+urxvt.color4: #5f87df
+! urxvt.color4: #005faf
+! urxvt.color5: #75507b
+urxvt.color5: #ff00d7
+! urxvt.color5: #9e6ffe
+
+! urxvt.color6: #06989a
+urxvt.color6: #008b8b
+urxvt.color7: #c8c8c8
+! urxvt.color8: #555753
+urxvt.color8: #636363
+urxvt.color9: #cc3300
+urxvt.color10: #95e454
+urxvt.color11: #fce94f
+! urxvt.color11: yellow
+urxvt.color12: #8ac6f2
+! urxvt.color12: #729fcf
+! urxvt.color12: #00bfff
+urxvt.color13: #ff5996
+! urxvt.color14: #34e2e2
+urxvt.color14: #00ffff
+urxvt.color15: #eeeeee
+
+! urxvt.foreground: #f6f3e8
+! urxvt.background: #1b1d1e
+
+! urxvt.active.cursorColor: #000000
+urxvt.active.cursorColor: magenta
+urxvt.active.cursorColor2: white
+urxvt.active.foreground: #000000
+! urxvt.active.foreground: #222222
+urxvt.active.background: #ffffff
+! New active
+urxvt.active.color0: #000000
+urxvt.active.color8: #505050
+! urxvt.active.color1: #cc0000
+! urxvt.active.color9: #cc3300
+urxvt.active.color2: #4e9a06
+urxvt.active.color10: #009933
+urxvt.active.color3: #ce5c00
+urxvt.active.color11: #f57900
+! nothing for 4 and 12 would be nice too
+urxvt.active.color4: #3465a4
+urxvt.active.color12: #006699
+! urxvt.active.color5: #ff0086
+! urxvt.active.color13: #fe4365
+! urxvt.active.color6: #89b6e2
+! urxvt.active.color14: #46a4ff
+urxvt.active.color6: #008b8b
+urxvt.active.color14: #00ffff
+urxvt.active.color7: #c8c8c8
+urxvt.active.color15: #eeeeee
+!magenta from lightr
+urxvt.active.color5: #870087
+urxvt.active.color13: #af00d7
+!my magenta to red
+urxvt.active.color1: #ff0086
+urxvt.active.color9: #fe4365
+
+
+

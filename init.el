@@ -17,9 +17,10 @@
   :config
   (ivy-mode 1)
   (setq ivy-use-virtual-buffers t
-	enable-recursive-minibuffers t)
-  (setq ivy-re-builders-alist
-	'((t . ivy--regex-fuzzy)))
+		enable-recursive-minibuffers t
+		ivy-re-builders-alist
+		'((swiper . regexp-quote)
+          (t      . ivy--regex-fuzzy)))
   (global-set-key (kbd "C-s") 'swiper)
   (global-set-key (kbd "C-c C-r") 'ivy-resume)
   (global-set-key (kbd "M-x") 'counsel-M-x)
@@ -35,20 +36,26 @@
     (all-the-icons-ivy-setup)))
 
 ;; Evil
-(use-package evil
-  :ensure t
-  :config
-  (evil-mode)
-  (evil-define-key 'visual 'global (kbd "TAB") 'indent-for-tab-command)
-  (use-package evil-leader
-    :ensure t
-    :config
-      (evil-leader/set-leader ",")
-  (evil-leader/set-key
-   "b" 'switch-to-buffer
-   "s" 'save-buffer
-   "a" 'counsel-find-file)
-  (global-evil-leader-mode)))
+;; (use-package evil
+;;   :ensure t
+;;   :config
+;;   (evil-mode)
+;;   (evil-define-key 'visual 'global (kbd "TAB") 'indent-for-tab-command)
+;;   (evil-define-key 'normal 'global (kbd "TAB") 'indent-for-tab-command)
+;;   (evil-define-key 'normal 'global (kbd "j") 'evil-next-visual-line)
+;;   (evil-define-key 'normal 'global (kbd "k") 'evil-previous-visual-line)
+;;   (evil-define-key 'visual 'global (kbd "j") 'evil-next-visual-line)
+;;   (evil-define-key 'visual 'global (kbd "k") 'evil-previous-visual-line)
+;;   (use-package evil-leader
+;;     :ensure t
+;;     :config
+;;       (evil-leader/set-leader ",")
+;;   (evil-leader/set-key
+;;    "b" 'switch-to-buffer
+;;    "s" 'save-buffer
+;;    "a" 'counsel-find-file
+;;    "r" 'revert-buffer)
+;;   (global-evil-leader-mode)))
 
 ;; Emacs Lisp
 (define-skeleton skeleton-lsk
@@ -118,6 +125,9 @@
   :config
   (setq geiser-default-implementation 'chez))
 
+;; clojure
+(use-package clojure-mode
+  :ensure t)
 ;; Python
 (use-package jedi
   :ensure t
@@ -133,8 +143,8 @@
 (use-package elfeed
   :ensure t
   :config
-  (add-to-list 'evil-emacs-state-modes 'elfeed-search-mode)
-  (add-to-list 'evil-emacs-state-modes 'elfeed-show-mode)
+  ;; (add-to-list 'evil-emacs-state-modes 'elfeed-search-mode)
+  ;; (add-to-list 'evil-emacs-state-modes 'elfeed-show-mode)
  (setq elfeed-feeds
       '("http://nullprogram.com/feed/"
         "http://planet.emacsen.org/atom.xml"
@@ -142,9 +152,9 @@
 	"http://feeds.reuters.com/reuters/technologyNews"
 	"https://edavis.github.io/hnrss/#firehose-feeds")))
 ;; tabs
-(setq-default c-basic-offset 8)
+(setq-default c-basic-offset 4)
 (setq-default indent-tabs-mode t)
-(setq-default tab-width 8)
+(setq-default tab-width 4)
 
 ;; Doc View
 (defun doc-view-rotate-current-page ()
@@ -195,7 +205,6 @@
 			    (local-set-key (kbd "C-c p") 'skeleton-code)
 			    (local-set-key (kbd "C-c P") 'skeleton-pre-code)))
 (require 'eww)
-
 (defun eww-current ()
   "Render HTML in the current buffer with EWW"
   (interactive)
@@ -228,15 +237,60 @@
   (global-set-key (kbd "к") 'magit-stage-modified)
   (global-set-key (kbd "н") 'magit-push))
 
-;; Java
-(use-package meghanada
+;; Projectile
+(use-package projectile
   :ensure t
   :config
-  (add-hook 'java-mode-hook
-	    (lambda ()
-	      (meghanada-mode t))))
+  (projectile-mode 1)
+  (global-set-key (kbd "C-c p") 'projectile-command-map)
+  (global-set-key (kbd "C-c C-p") 'projectile-command-map)
+  (setq projectile-project-search-path '("~/projects/")
+		projectile-completion-system 'ivy))
 
-;; Minor Modes
+;; Java
+
+(defun fieldgen (type field)
+  "Inserts a Java field, and getter/setter methods."
+  (interactive "MType: \nMField: ")
+
+  (let ((oldpoint (point))
+        (capfield (concat (capitalize (substring field 0 1)) (substring field 1)))
+        )
+    (insert (concat "public " type " get" capfield "()\n"
+                    "{\n"
+                    "    return this." field ";\n"
+                    "}\n\n"
+                    "public void set" capfield "(" type " " field ")\n"
+                    "{\n"
+                    "    this." field " = " field ";\n"
+                    "}\n"
+                    ))
+    (c-indent-region oldpoint (point) t)))
+
+
+;; (use-package meghanada
+;;   :ensure t
+;;   :config
+;;   (add-hook 'java-mode-hook
+;; 	    (lambda ()
+;; 	      (meghanada-mode t))))
+
+;; LSP
+(use-package lsp-mode
+  :ensure t
+  :config
+  (use-package lsp-ui
+	:ensure t
+	:config
+	(setq lsp-ui-doc-enable nil)
+	(setq lsp-ui-sideline-enable t)
+	(setq lsp-ui-peek-enable t))
+  (use-package company-lsp
+	:ensure t)
+  (use-package lsp-java
+	:ensure t
+	:config)
+  (add-hook 'prog-mode-hook 'lsp))
 ;; Company
 (use-package company
   :ensure t
@@ -256,7 +310,8 @@
     "region: "
     ("v" er/expand-region "expand")
     ("V" er/contract-region "contract"))
-  (evil-define-key 'visual 'global (kbd "v") 'hydra-expand-region/body))
+  ;; (evil-define-key 'visual 'global (kbd "v") 'hydra-expand-region/body)
+)
 
 ;; Avy
 (use-package avy
@@ -291,6 +346,9 @@
 			     (dired-hide-details-mode)
 			     (local-set-key (kbd "C-c d") 'dired-hide-details-mode)))
 
+
+;; odf-mode
+(require 'odf-mode)
 
 ;; smart parens
 (use-package smartparens
@@ -357,8 +415,9 @@
   (global-set-key (kbd "C-t (") 'sp-wrap-round)
   (global-set-key (kbd "M-n")   'sp-next-sexp)
   (global-set-key (kbd "M-p")   'sp-previous-sexp)
-  (evil-leader/set-key
-    "p" 'hydra-smartparens/body))
+  ;; (evil-leader/set-key
+  ;;   "p" 'hydra-smartparens/body)
+  )
 
 
 ;; multiple cursors
@@ -583,8 +642,8 @@ Version 2017-04-19"
 ;;(transparency 80)
 (set-face-attribute 'region    nil :background "blue")
 (set-face-attribute 'region    nil :foreground "white")
-(set-face-attribute 'default   nil :foreground "#FF0000")
-(set-face-attribute 'default   nil :background "#000000")
+(set-face-attribute 'default   nil :foreground "#FFFFFF")
+(set-face-attribute 'default   nil :background "#333333")
 ;(set-face-attribute 'fringe    nil :background "#000000")
 ;;(set-face-attribute 'mode-line nil :box '(:width 0))
 ;;(set-face-attribute 'mode-line-inactive nil :box '(:width 0))
@@ -698,6 +757,18 @@ Source: https://git.io/vQKzv"
 
 (global-set-key (kbd "C-c C") 'comment-dwim)
 
+;; Leader Key
+(define-prefix-command 'leader-key)
+(global-set-key (kbd "S-SPC") 'leader-key)
+(global-set-key (kbd "S-SPC a") 'counsel-find-file)
+(global-set-key (kbd "S-SPC w") 'yank)
+(global-set-key (kbd "S-SPC p") 'hydra-smartparens/body)
+(global-set-key (kbd "S-SPC v") 'hydra-expand-region/body)
+(global-set-key (kbd "S-SPC f") 'projectile-find-file)
+(global-set-key (kbd "S-SPC b") 'projectile-switch-to-buffer)
+(global-set-key (kbd "S-SPC c") 'projectile-switch-project)
+
+
 ;; disable size hinting
 (setq frame-resize-pixelwise t)
 
@@ -708,13 +779,13 @@ Source: https://git.io/vQKzv"
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    (quote
-    ("2047464bf6781156ebdac9e38a17b97bd2594b39cfeaab561afffcbbe19314e2" "fe666e5ac37c2dfcf80074e88b9252c71a22b6f5d2f566df9a7aa4f9bea55ef8" "6b289bab28a7e511f9c54496be647dc60f5bd8f9917c9495978762b99d8c96a0" "cab317d0125d7aab145bc7ee03a1e16804d5abdfa2aa8738198ac30dc5f7b569" "d1cc05d755d5a21a31bced25bed40f85d8677e69c73ca365628ce8024827c9e3" "d1b4990bd599f5e2186c3f75769a2c5334063e9e541e37514942c27975700370" "75d3dde259ce79660bac8e9e237b55674b910b470f313cdf4b019230d01a982a" "151bde695af0b0e69c3846500f58d9a0ca8cb2d447da68d7fbf4154dcf818ebc" "93a0885d5f46d2aeac12bf6be1754faa7d5e28b27926b8aa812840fe7d0b7983" "100e7c5956d7bb3fd0eebff57fde6de8f3b9fafa056a2519f169f85199cc1c96" "d2e9c7e31e574bf38f4b0fb927aaff20c1e5f92f72001102758005e53d77b8c9" "1c082c9b84449e54af757bcae23617d11f563fc9f33a832a8a2813c4d7dfb652" "6b2636879127bf6124ce541b1b2824800afc49c6ccd65439d6eb987dbf200c36" "6d589ac0e52375d311afaa745205abb6ccb3b21f6ba037104d71111e7e76a3fc" "8aca557e9a17174d8f847fb02870cb2bb67f3b6e808e46c0e54a44e3e18e1020" "a3fa4abaf08cc169b61dea8f6df1bbe4123ec1d2afeb01c17e11fdc31fc66379" "4697a2d4afca3f5ed4fdf5f715e36a6cac5c6154e105f3596b44a4874ae52c45" "7e78a1030293619094ea6ae80a7579a562068087080e01c2b8b503b27900165c" default)))
+	("2047464bf6781156ebdac9e38a17b97bd2594b39cfeaab561afffcbbe19314e2" "fe666e5ac37c2dfcf80074e88b9252c71a22b6f5d2f566df9a7aa4f9bea55ef8" "6b289bab28a7e511f9c54496be647dc60f5bd8f9917c9495978762b99d8c96a0" "cab317d0125d7aab145bc7ee03a1e16804d5abdfa2aa8738198ac30dc5f7b569" "d1cc05d755d5a21a31bced25bed40f85d8677e69c73ca365628ce8024827c9e3" "d1b4990bd599f5e2186c3f75769a2c5334063e9e541e37514942c27975700370" "75d3dde259ce79660bac8e9e237b55674b910b470f313cdf4b019230d01a982a" "151bde695af0b0e69c3846500f58d9a0ca8cb2d447da68d7fbf4154dcf818ebc" "93a0885d5f46d2aeac12bf6be1754faa7d5e28b27926b8aa812840fe7d0b7983" "100e7c5956d7bb3fd0eebff57fde6de8f3b9fafa056a2519f169f85199cc1c96" "d2e9c7e31e574bf38f4b0fb927aaff20c1e5f92f72001102758005e53d77b8c9" "1c082c9b84449e54af757bcae23617d11f563fc9f33a832a8a2813c4d7dfb652" "6b2636879127bf6124ce541b1b2824800afc49c6ccd65439d6eb987dbf200c36" "6d589ac0e52375d311afaa745205abb6ccb3b21f6ba037104d71111e7e76a3fc" "8aca557e9a17174d8f847fb02870cb2bb67f3b6e808e46c0e54a44e3e18e1020" "a3fa4abaf08cc169b61dea8f6df1bbe4123ec1d2afeb01c17e11fdc31fc66379" "4697a2d4afca3f5ed4fdf5f715e36a6cac5c6154e105f3596b44a4874ae52c45" "7e78a1030293619094ea6ae80a7579a562068087080e01c2b8b503b27900165c" default)))
  '(ivy-mode t)
  '(ivy-use-virtual-buffers t)
  '(org-agenda-files nil)
  '(package-selected-packages
    (quote
-    (web-beautify web-mode jedi elfeed hydra evil-leader avy all-the-icons-ivy ivy helm slime-company exwm geiser emmet-mode irony cython-mode cyberpunk-theme multiple-cursors meghanada doom-themes neotree doom-modeline flymake-haskell-multi haskell-mode slime treemacs csharp-mode c-sharp-mode toml-mode rust-mode olivetti mixed-pitch mixed-pitch-mode writeroom-mode org-bullets mu4e notmuch yasnippet-snippets use-package rainbow-mode magit expand-region elfeed-org company)))
+	(projectile lsp-java company-lsp lsp-company lsp-ui lsp-mode clojure-mode clojure web-beautify web-mode jedi elfeed hydra evil-leader avy all-the-icons-ivy ivy helm slime-company exwm geiser emmet-mode irony cython-mode cyberpunk-theme multiple-cursors meghanada doom-themes neotree doom-modeline flymake-haskell-multi haskell-mode slime treemacs csharp-mode c-sharp-mode toml-mode rust-mode olivetti mixed-pitch mixed-pitch-mode writeroom-mode org-bullets mu4e notmuch yasnippet-snippets use-package rainbow-mode magit expand-region elfeed-org company)))
  '(show-paren-mode t)
  '(tool-bar-mode nil))
 (custom-set-faces
@@ -722,13 +793,14 @@ Source: https://git.io/vQKzv"
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(cursor ((t (:background "magenta" :foreground "black"))))
+ '(default ((t (:family "Terminus (TTF)" :foundry "PfEd" :slant normal :weight normal :height 90 :width normal))))
  '(custom-comment ((t (:background "gray40"))))
- '(font-lock-comment-face ((t (:foreground "Firebrick" :slant italic))))
  '(highlight ((t (:background "#0000FF" :foreground "white"))))
+ '(hl-line ((t (:background "#222"))))
  '(ivy-current-match ((t (:background "light gray" :foreground "black"))))
  '(ivy-minibuffer-match-face-2 ((t (:background "cyan" :weight bold))))
  '(ivy-minibuffer-match-face-3 ((t (:background "#00BBBB" :weight bold))))
  '(ivy-minibuffer-match-face-4 ((t (:background "#00bbff" :weight bold))))
  '(show-paren-match ((t (:background "cyan" :foreground "black"))))
  '(show-paren-mismatch ((t (:background "red" :foreground "black")))))
+
