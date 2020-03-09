@@ -1,0 +1,44 @@
+* My dotfiles
+these are dotfiles for
+ - [[https://stumpwm.github.io/][Stumpwm]]
+ - [[https://gnu.org/s/emacs][Emacs]]
+ - [[i3][https://i3wm.org]] (not in use)
+and some other scripts.
+
+
+* Emacs package list
+ - hydra
+ - org-bullets
+ - mixed-pitch
+ - writeroom-mode
+ - slime
+ - geiser
+ - parinfer
+ - clojure-mode
+ - jedi
+ - irony
+ - elfeed
+ - emmet-mode
+ - web-beautify
+ - web-mode
+ - magit
+ - projectile
+ - company
+ - lsp-mode
+ - lsp-ui
+ - company-lsp
+ - lsp-java
+ - rainbow-mode
+ - expand-region
+ - yasnippet
+ - yasnippet-snippets
+ - smartparens
+ - flycheck
+ - go-mode
+ - popup-kill-ring
+ - esup
+ - paredit
+ - pdf-tools
+ - smart-mode-line
+ - frog-jump-buffer
+ - haskell-mode
