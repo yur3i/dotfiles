@@ -1,5 +1,6 @@
+(server-start)
+
 ;; packaging
-(add-to-list 'load-path "/home/jorde/.emacs.d/lisp")
 (require 'package)
 (setq package-archives '(("ELPA"  . "http://tromey.com/elpa/")
 			 ("gnu"   . "http://elpa.gnu.org/packages/")
@@ -7,74 +8,100 @@
 			 ("org" . "https://orgmode.org/elpa/")))
 (package-initialize)
 ;; Theming
-(use-package modus-vivendi-theme
+(setq default-frame-alist '((font . "-*-terminus-medium-*-*-*-14-140-*-72-c-*-*-*")
+			    (vertical-scroll-bars . nil)))
+
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
+;; (set-background-color "#fafafa")
+;; (set-foreground-color "#000")
+(set-cursor-color "red")
+(set-face-attribute 'mode-line nil :background "#e3ffff")
+;; Selectrum/Ido
+(use-package selectrum
   :ensure t
   :config
-  (load-theme 'modus-vivendi t)
-  (menu-bar-mode -1)
-  (scroll-bar-mode -1)
-  (tool-bar-mode -1)) 
-;; Smartparens
-(use-package smartparens
-  :ensure t
-  :hook (prog-mode . smartparens-mode))
+  (selectrum-mode +1)
+  (use-package selectrum-prescient
+    :ensure t)
+  (selectrum-prescient-mode +1)
+  (prescient-persist-mode +1))
+;; Paredit
+(use-package paredit
+  :ensure t)
 ;; Yasnippet
 (use-package yasnippet
   :ensure t
   :config
-  (use-package yasnippet-snippets :ensure t)
-  (yas-global-mode))
+  (use-package yasnippet-snippets
+    :ensure t))
 ;; git
 (use-package magit
   :ensure t
   :bind (("C-x g" . magit-status)))
 ;; org mode
 (use-package org
-  :ensure t
+  :ensure org-plus-contrib
   :config
+  (require 'org-tempo)
   (require 'org)
   (require 'ox-latex)
   (setq org-src-fontify-natively t)
-
+  (add-to-list 'org-latex-packages-alist '("" "listings" nil))
+  (add-to-list 'org-latex-packages-alist '("" "color" nil))
+  (add-to-list 'org-latex-packages-alist '("" "xcolor" nil))
+  (add-to-list 'org-latex-packages-alist '("" "courier" nil))    
+  ;; (add-to-list 'org-latex-packages-alist '("" "times" nil))  
+  (setq org-latex-listings t)
+  (setq org-latex-listings-options '(
+				     ("backgroundcolor" "\\color{lightgray!20}")
+				     ("keywordstyle" "\\color{magenta}")
+				     ("commentstyle" "\\color{green}")
+				     ("stringstyle" "\\color{orange}")
+				     ("basicstyle" "\\ttfamily\\footnotesize")
+				     ("numbers" "left")
+				     ("showtabs" "false")
+				     ("showspaces" "false")
+				     ("showstringspaces" "false")
+				     ("breaklines" "true")))
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((R . t)
      (latex . t)))
-  (add-hook 'org-mode-hook 'visual-line-mode))
-;; ivy, counsel, swiper
-(use-package ivy
+  (add-hook 'org-mode-hook 'visual-line-mode)
+  (defun org-table-with-shrunk-field (arg)
+    0))
+;;php-mode
+(use-package php-mode
   :ensure t
   :config
-  (ivy-mode 1))
-(use-package counsel
+  (add-hook 'php-mode-hook 'lsp))
+;;web-mode
+(use-package web-mode
   :ensure t
   :config
-  (bind-keys
-   ("M-x" . counsel-M-x)
-   ("C-x C-f" . counsel-find-file)))
-(use-package swiper
-  :ensure t
-  :config
-  (bind-keys
-   ("C-s" . swiper)))
-;; scheme
-(use-package geiser
-  :ensure t
-  :hook (scheme-mode . geiser-mode)
-  :config
-  (setq geiser-active-implementations '(chez))
-  (add-hook 'geiser-mode-hook 'smartparens-mode))
-
-;; prog mode specific keys
+  (add-hook 'web-mode-hook 'lsp)
+  (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.[agj]sp\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.as[cp]x\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.html\\'" . web-mode)))
+;; prog mode specific stuff
 (bind-keys :map prog-mode-map
-	   ("M-k" . kill-sexp))
-
+	   ("M-k" . kill-sexp)
+	   ("C-j" . company-complete))
+(add-hook 'prog-mode-hook 'yas-minor-mode)
 ;; global keys
-(bind-keys
+(bind-keys*
  ("M-]" . next-buffer)
  ("M-[" . previous-buffer)
  ("M-o" . other-window)
  ("M-u" . undo)
+ ("M-s" . sp-splice-sexp)
  ("C-x k" . kill-this-buffer)
  ("C-x K" . kill-buffer-and-window) 
  ("C-x 2" . (lambda () (interactive)(split-window-vertically) (other-window 1)))
@@ -83,6 +110,7 @@
 ;; global modes
 (delete-selection-mode 1)
 (show-paren-mode 1)
+(paredit-mode)
 
 ;; custom functions
 (defun run-python3.7 ()
@@ -119,7 +147,7 @@ cursor as close to its previous position as possible."
 
 (defun move1 (dir)
   "Moves both current buffer and file it's visiting to DIR."
-  (interactive "DNew directory: ")
+  (interactive "DNew directory: ") 
   (let* ((name (buffer-name))
          (filename (buffer-file-name))
          (dir
@@ -184,17 +212,66 @@ Version 2017-04-19"
     (other-window 1)
     (rename-buffer (concat "*" db "*"))))
 
+(defun repeat-complex-command-no-confirm ()
+  "Repeat the lasts complex command without confirming"
+  (interactive)
+  (let* ((hist  command-history)
+         newcmd)
+    (while (eq 'repeat-complex-command-no-confirm (caar hist))
+      (setq hist  (cdr hist)))
+    (setq newcmd  (car hist))
+    (if newcmd
+        (apply #'funcall-interactively (car newcmd)
+               (mapcar (lambda (ee) (eval ee t)) (cdr newcmd)))
+      (error "There are no previous complex commands to repeat"))))
+
+(defun my-repeat ()
+  "Repeats the last command, complex or otherwise without confirming"
+  (interactive)
+  (if (eq last-command (caar command-history))
+      (repeat-complex-command-no-confirm)
+    (call-interactively last-command))
+  (setq this-command  last-command))
+
+(global-set-key (kbd "M-q") 'my-repeat)
+
+(defun my-org-open-as-pdf ()
+  (interactive)
+  (call-process-shell-command (concat "mupdf-x11 " (replace-regexp-in-string "\.org$" ".pdf" (buffer-name)))))
+(bind-keys :map org-mode-map
+	   ("C-c o" . my-org-open-as-pdf))
+
+(defun roll (n)
+  "Roll a dice"
+  (interactive "nRoll: ")
+  (insert (number-to-string (random n))))
+
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(org-structure-template-alist
+   (quote
+    (("a" . "export ascii")
+     ("c" . "center")
+     ("C" . "comment")
+     ("e" . "equation")
+     ("E" . "export")
+     ("h" . "export html")
+     ("l" . "export latex")
+     ("q" . "quote")
+     ("s" . "src")
+     ("v" . "verse"))))
  '(package-selected-packages
    (quote
-    (geiser counsel ivy slime yasnippet-snippets use-package smartparens modus-vivendi-theme magit))))
+    (selectrum-prescient selectrum leuven-theme paredit yasnippet transmission php-mode company-lsp lsp-company company company-mode lsp-ivy lsp-mode flycheck web-mode counsel-tramp vuiet org-plus-contrib org-contrib geiser counsel ivy slime yasnippet-snippets use-package smartparens modus-vivendi-theme magit)))
+ '(show-paren-mode t)
+ '(tool-bar-mode nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(mode-line ((t (:background "#e3ffff" :foreground "black" :box (:line-width 1 :color "black" :style released-button))))))

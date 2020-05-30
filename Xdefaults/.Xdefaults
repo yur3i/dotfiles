@@ -6,8 +6,7 @@ Xft.autohint: false
 Xft.hintstyle: hintslight
 Xft.lcdfilter: lcddefault
 
-*.background: #111
-*.foreground: #FFF
-
-URxvt.font: xft:Hack:size=14
+*.background: #FaFaFa
+*.foreground: #000
 URxvt*scrollBar:  false
+URxvt.font:-*-terminus-medium-*-*-*-14-140-*-72-c-*-*-*

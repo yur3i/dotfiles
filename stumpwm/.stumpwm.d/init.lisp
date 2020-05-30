@@ -1,23 +1,56 @@
 (in-package :stumpwm)
-
-;; libs
-(require :swank)
-
 (set-prefix-key (kbd "C-i"))
+(defvar *progs* (list))
 
-(swank-loader:init)
-(defcommand swank () ()
-	    (swank:create-server :port 4004
-				 :style swank:*communication-style*
-				 :dont-close t)
-	    (echo-string
-	     (current-screen)
-	     "Starting swank. M-x slime-connect RET RET, then (in-package stumpwm)."))
+(defun load-file (file)
+  (load (concatenate 'string (stumpwm::getenv "HOME") "/.stumpwm.d/" file ".lisp")))
 
-(defcommand kill-and-remove () ()
-	"Kills the window and removes the frame"
-	(kill)
-	(remove))
+(load-file "shifting")
+(load-file "defprog")
+(load-file "defmenu")
+
+(defprog emacs "e" "emacs" '(:class "Emacs"))
+(defprog firefox "f" "firefox" '(:class "Firefox"))
+(defprog libreoffice "o" "libreoffice" '(:class "libreoffice"))
+
+
+
+(defun get-filenames-list (list retlist)
+  (if list
+      (get-filenames-list (cdr list) (append retlist (list (list (subseq (namestring (car list)) 18 (length (namestring (car list))))
+								 (namestring (car list))))))
+    retlist))
+
+(defmenu music "m"
+  (get-filenames-list (union (uiop:directory-files (concatenate 'string (stumpwm::getenv "HOME") "/Music/")) 
+			     (uiop:subdirectories (concatenate 'string (stumpwm::getenv "HOME") "/Music/")))
+		      '())
+  (run-shell-command (concatenate 'string (concatenate
+					   'string "mpv --no-video "
+					   choice) " --input-ipc-server=/tmp/mpvsocket")))
+
+(defcommand play-pause-music () ()
+  (run-shell-command "echo'{\"command\": [\"cycle\", \"pause\"]}' | socat - /tmp/mpvsocket"))
+
+(defparameter *programs*
+  '(("Telegram" "emacsclient -c -e '(telega nil)'")
+    ("Email" "emacsclient -c -e '(notmuch)'")
+    ("GIMP" "gimp")
+    ("Web" "firefox")
+    ("NeXt" "export $(dbus-launch); next")))
+
+(defcommand app-menu () ()
+  (labels ((pick (options)
+             (let ((selection (stumpwm::select-from-menu (current-screen) options "")))
+               (cond
+                 ((null selection)
+                  (throw 'stumpwm::error "Abort."))
+                 ((stringp (second selection))
+                  (second selection))
+                 (t
+                  (pick (cdr selection)))))))
+    (let ((choice (pick *programs*)))
+      (run-shell-command choice))))
 
 (defcommand vsplit-and-switch () ()
 	"Splits vertically and switches to next window"
@@ -29,32 +62,6 @@
 	(hsplit)
 	(fnext))
 
-(defcommand hsplit-switch-open-emacs () ()
-	"Splits horizontally and opens a terminal in the new window"
-	(hsplit-and-switch)
-	(stumpwm:run-commands "exec emacsclient -a \"\" -c"))
-
-(defcommand vsplit-switch-open-emacs () ()
-	"Splits vertically and opens a terminal in the new window"
-	(vsplit-and-switch)
-	(stumpwm:run-commands "exec emacsclient -a \"\" -c"))
-
-(defcommand hsplit-switch-open-terminal () ()
-	"Splits horizontally and opens a terminal in the new window"
-	(hsplit-and-switch)
-	(stumpwm:run-commands "exec urxvt"))
-
-(defcommand vsplit-switch-open-terminal () ()
-	"Splits vertically and opens a terminal in the new window"
-	(vsplit-and-switch)
-	(stumpwm:run-commands "exec urxvt"))
-
-(defcommand hsplit-switch-open-terminal () ()
-	"Splits horizontally and opens a terminal in the new window"
-	(hsplit-and-switch)
-	(stumpwm:run-commands "exec urxvt"))
-
-
 ;; keybinds
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-]") "next-in-frame")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-[") "prev-in-frame")
@@ -62,7 +69,7 @@
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-p") "fother")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-F") "fullscreen")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-RET") "exec urxvt")
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-d") "exec dmenu_run")
+(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-d") "app-menu")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-q") "delete")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-s") "vsplit-and-switch")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-S") "hsplit-and-switch")
@@ -70,7 +77,7 @@
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-R") "kill-and-remove")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-w") "iresize")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-l") "windowlist")
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-e")  "exec emacsclient -a \"\" -c")
+
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-0") "select-window-by-number 0")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-1") "select-window-by-number 1")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-2") "select-window-by-number 2")
@@ -84,8 +91,8 @@
 
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-)") "pull 0")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-!") "pull 1")
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-@") "pull 2")
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-#") "pull 3")
+(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-\"") "pull 2")
+;(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-\£") "pull 3")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-$") "pull 4")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-%") "pull 5")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-^") "pull 6")
@@ -93,62 +100,55 @@
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-*") "pull 8")
 (stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-(") "pull 9")
 
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "F8")  "exec wmctrl -xa telegram")
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "F9")  "exec wmctrl -xa emacs")
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "F10") "exec wmctrl -xa firefox")
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "F11") "exec wmctrl -xa urxvt")
-
-(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "XF86AudioLowerVolume") "exec wmctrl -xa urxvt")
-
-(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "f")  "exec firefox")
-(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "p")  "exec urxvt -e bash $HOME/projects/stuff/projectile.sh")
-(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "m")  "exec bash /home/yur3i/.2mon.sh")
 (stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "s")  "exec xfce4-screenshooter")
+(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "f")  "float-this")
 
-(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "t")  "hsplit-switch-open-terminal")
-(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "T")  "vsplit-switch-open-terminal")
-(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "e")  "hsplit-switch-open-emacs")
-(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "E")  "vsplit-switch-open-emacs") 
+(stumpwm:define-key stumpwm:*top-map* (stumpwm:kbd "s-m") "music-menu")
+(defvar *my-music-bindings*
+  (let ((m (stumpwm:make-sparse-keymap)))
+    (stumpwm:define-key m (stumpwm:kbd "p") "play-pause-music")
+    m ; NOTE: this is important
+  ))
 
-(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "g")  "gnew")
-(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "G")  "gmove")
-(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "f")  "gnext")
-(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "b")  "gprev")
-(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "R")  "exec bash /home/jorde/.local/bin/reloadff.sh")
+(stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "m") '*my-music-bindings*)
+
+
+
+
 ;; settings
 
 (setf *mouse-focus-policy*  :sloppy) ;; :click :ignore :sloppy -- Focus follows mouse
 (setf *window-border-style* :thin) ;; :none :thick :thin :tight -- no borders
-(set-win-bg-color "#101010")
-(set-focus-color "yellow")
-(set-unfocus-color "black")
-;; font
-;(set-font (make-instance 'xft:font :family "DejaVu Sans Mono" :subfamily "Book" :size 11))
+(set-win-bg-color "#FAFAFA")
+(set-focus-color "red")
+(set-unfocus-color "#FAFAFA")
 
 ;; bar
-(set-module-dir "/home/jorde/.stumpwm.d/modules/")
-(load-module "cpu")
-(load-module "disk")
-(load-module "mem")
-(load-module "battery-portable")
-(load-module "maildir")
+;; (set-module-dir "/home/jorde/.stumpwm.d/modules/")
+;; (load-module "cpu")
+;; (load-module "disk")
+;; (load-module "mem")
+;; (load-module "battery-portable")
+;; (load-module "maildir")
 
-(setf *mode-line-border-width* 0)
-(setf *screen-mode-line-format*
-	  (list "[%n] %W"
-			'(:eval (stumpwm:run-shell-command "echo" t))
-			"%C | %M | BAT: %B | "
-			'(:eval (stumpwm:run-shell-command "date '+%a %b %d %H:%M'" t))))
-(setf stumpwm:*mode-line-background-color* "#111111")
-(setf stumpwm:*mode-line-foreground-color* "#CCC")
-(mode-line)
+;; (setf *mode-line-border-width* 0)
+;; (setf *screen-mode-line-format*
+;; 	  (list "%W"
+;; 			'(:eval (stumpwm:run-shell-command "echo" t))
+;; 			"%C | %M | BAT: %B | "
+;; 			'(:eval (stumpwm:run-shell-command "date '+%a %b %d %H:%M'" t))))
+;; (setf *mode-line-background-color* "#111111")
+;; (setf *mode-line-foreground-color* "#CCC")
+;; (setf *message-window-gravity* :center)
+;; (setf *input-window-gravity* :center)
+;; (mode-line)
 ;; gaps
 ;; (load-module "swm-gaps")
 ;; (setf swm-gaps:*inner-gaps-size* 5)
 ;; (setf swm-gaps:*outer-gaps-size* 5)
 
 ;; wallpaper
-(run-shell-command "feh --bg-fill /home/jorde/Pictures/Court-Of-Lahore/CourtOfLahore.png")
+(run-shell-command "feh --bg-fill /home/jorde/Pictures/wallpapers/ansi.png")
 
 ;; Audio
 (setf *key-codes*
