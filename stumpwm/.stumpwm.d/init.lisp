@@ -1,4 +1,5 @@
 (in-package :stumpwm)
+
 (set-prefix-key (kbd "C-i"))
 (defvar *progs* (list))
 
@@ -29,8 +30,15 @@
 					   'string "mpv --no-video "
 					   choice) " --input-ipc-server=/tmp/mpvsocket")))
 
+(defun mpv-command (command)
+  (run-shell-command (concatenate 'string "echo '" command "' | socat - /tmp/mpvsocket")))
+
 (defcommand play-pause-music () ()
-  (run-shell-command "echo'{\"command\": [\"cycle\", \"pause\"]}' | socat - /tmp/mpvsocket"))
+  (mpv-command "cycle pause"))
+
+(defcommand next-track () ()
+  (mpv-command "playlist-next")
+  (uiop:run-program '("bash" "/home/jorde/.scripts/get_mpv_name") :output :string))
 
 (defparameter *programs*
   '(("Telegram" "emacsclient -c -e '(telega nil)'")
@@ -107,21 +115,23 @@
 (defvar *my-music-bindings*
   (let ((m (stumpwm:make-sparse-keymap)))
     (stumpwm:define-key m (stumpwm:kbd "p") "play-pause-music")
+    (stumpwm:define-key m (stumpwm:kbd "n") "next-track")    
     m ; NOTE: this is important
   ))
 
 (stumpwm:define-key stumpwm:*root-map* (stumpwm:kbd "m") '*my-music-bindings*)
 
+(load-file "defmap")
 
-
-
+(defmap test-music "j" (("p" "play-pause-music")
+			("n" "next-track")))
 ;; settings
 
 (setf *mouse-focus-policy*  :sloppy) ;; :click :ignore :sloppy -- Focus follows mouse
 (setf *window-border-style* :thin) ;; :none :thick :thin :tight -- no borders
-(set-win-bg-color "#FAFAFA")
+(set-win-bg-color "#0C1021")
 (set-focus-color "red")
-(set-unfocus-color "#FAFAFA")
+(set-unfocus-color "#0C1021")
 
 ;; bar
 ;; (set-module-dir "/home/jorde/.stumpwm.d/modules/")
@@ -177,4 +187,4 @@
 
 ;; Mute
 (define-key stumpwm:*top-map* (stumpwm:kbd "XF86AudioMute") "exec amixer set Master toggle")
-(define-key stumpwm:*root-map* (stumpwm:kbd "q") "exec killall python")
+(define-key stumpwm:*root-map* (stumpwm:kbd "q") "exec bash /home/jorde/.scripts/defo_not_cheating")

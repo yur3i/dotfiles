@@ -89,15 +89,6 @@
   :ensure t
   :config
   (add-hook 'php-mode-hook 'lsp))
-;; Common Lisp
-(use-package slime
-  :ensure t
-  :config
-  (load (expand-file-name "~/quicklisp/slime-helper.el"))
-  ;; Replace "sbcl" with the path to your implementation
-  (setq inferior-lisp-program "sbcl")
-  (setq inferior-lisp-program "/usr/bin/sbcl"))
-(add-hook 'lisp-mode-hook 'paredit-mode)
 ;;web-mode
 (use-package web-mode
   :ensure t
@@ -122,7 +113,7 @@
  ("M-[" . previous-buffer)
  ("M-o" . other-window)
  ("M-u" . undo)
- ("M-s" . paredit-splice-sexp)
+ ("M-s" . sp-splice-sexp)
  ("C-x k" . kill-this-buffer)
  ("C-x K" . kill-buffer-and-window) 
  ("C-x 2" . (lambda () (interactive)(split-window-vertically) (other-window 1)))
@@ -290,9 +281,8 @@ Version 2017-04-19"
      ("v" . "verse"))))
  '(package-selected-packages
    (quote
-    (notmuch blackboard-theme rust-mode go-mode selectrum-prescient selectrum leuven-theme paredit yasnippet transmission php-mode company-lsp lsp-company company company-mode lsp-ivy lsp-mode flycheck web-mode counsel-tramp vuiet org-plus-contrib org-contrib geiser counsel ivy slime yasnippet-snippets use-package smartparens modus-vivendi-theme magit)))
+    (blackboard-theme rust-mode go-mode selectrum-prescient selectrum leuven-theme paredit yasnippet transmission php-mode company-lsp lsp-company company company-mode lsp-ivy lsp-mode flycheck web-mode counsel-tramp vuiet org-plus-contrib org-contrib geiser counsel ivy slime yasnippet-snippets use-package smartparens modus-vivendi-theme magit)))
  '(prescient-filter-method (quote (literal regexp initialism fuzzy)))
- '(send-mail-function (quote smtpmail-send-it))
  '(show-paren-mode t)
  '(tool-bar-mode nil))
 (custom-set-faces
