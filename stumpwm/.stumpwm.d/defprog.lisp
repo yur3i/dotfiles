@@ -6,23 +6,16 @@
   (let ((name-focus (intern1 (concat (string name) "-FOCUS")))
         (name-pull (intern1 (concat "pull-" (string name)))))
     `(progn
-       ;; s-key to launch or focus
        (shifting-command ,name ,props ,cmd ,rat)
-       (define-key *top-map* (kbd ,(concatenate 'string "s-" key))
+       (define-key *root-map* (kbd ,key)
          ,(string name))
 
-       ;; s-KEY to launch another
        (defcommand ,name-focus () ()
          (run-shell-command ,cmd)
          ;; (focus-matching-window ,props)
          )
-       (define-key *top-map*
-           (kbd ,(concatenate 'string "s-" (string-upcase key)))
-         ,(string name-focus))
-       ;; C-i C-key for pulling window
-       (defcommand ,name-pull () ()
-         (run-or-pull ,cmd ,props))
        (define-key *root-map*
-           (kbd ,(concatenate 'string "C-" (string-upcase key)))
-	   ,(string name-pull))))
+           (kbd ,(string-upcase key))
+         ,(string name-focus))
+              ))
   )
